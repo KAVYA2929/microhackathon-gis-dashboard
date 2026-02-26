@@ -1,27 +1,12 @@
 // MAP
-var map = L.map('map').setView([13.0827, 80.2707], 15);
+var map = L.map('map', { zoomControl: false }).setView([13.0, 80.25], 12);
 
 L.tileLayer(
   'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 ).addTo(map);
 
-// FIBER ROUTE
-var fiberRoute = [
-  [13.0827, 80.2707],
-  [13.0835, 80.2715],
-  [13.0842, 80.2728],
-  [13.0850, 80.2740]
-];
-
-L.polyline(fiberRoute, {
-  color:'cyan',
-  weight:5
-}).addTo(map);
-
 // STORAGE
-var markers = {};
-var heatData = [];
-var heatLayer = L.heatLayer(heatData, { radius:25, blur:15 }).addTo(map);
+var cables = {};
 
 // FETCH MULTI-NODE DATA
 setInterval(() => {
@@ -29,40 +14,84 @@ setInterval(() => {
     .then(res => res.json())
     .then(nodes => {
 
+      let readingsBody = document.getElementById("readingsBody");
+      let bendingAlerts = document.getElementById("bendingAlerts");
+      let predictiveAnalysis = document.getElementById("predictiveAnalysis");
+
+      if (readingsBody) readingsBody.innerHTML = "";
+      if (bendingAlerts) bendingAlerts.innerHTML = "";
+      if (predictiveAnalysis) predictiveAnalysis.innerHTML = "";
+
+      let hasBending = false;
+
       nodes.forEach(n => {
 
-        // CREATE MARKER IF NOT EXISTS
-        if (!markers[n.node_id]) {
-          markers[n.node_id] = L.circleMarker(
-            [n.lat, n.lng],
-            { radius:10, color:'green', fillColor:'green', fillOpacity:1 }
-          ).addTo(map);
+        // CREATE CABLE IF NOT EXISTS
+        if (!cables[n.node_id]) {
+          cables[n.node_id] = L.polyline(n.path, { color: 'cyan', weight: 6 }).addTo(map);
         }
 
         // STATUS COLOR
+        let statusClass = "safe";
+        let lineColor = "cyan";
+
         if (n.status === "DANGER") {
-          markers[n.node_id].setStyle({ color:'red', fillColor:'red' });
-          markers[n.node_id].getElement().classList.add("blink");
-
-          heatData.push([n.lat, n.lng, 1]);
-          heatLayer.setLatLngs(heatData);
-
-          let table = document.getElementById("alertTable");
-          let row = table.insertRow(1);
-          row.insertCell(0).innerText = n.time;
-          row.insertCell(1).innerText = n.node_id;
-          row.insertCell(2).innerText = n.status;
-          row.insertCell(3).innerText = n.vibration;
-          row.insertCell(4).innerText = n.accel;
-
+          statusClass = "danger";
+          lineColor = "red";
+          if (cables[n.node_id].getElement()) cables[n.node_id].getElement().classList.add("blink");
+        } else if (n.status === "WARNING") {
+          statusClass = "warning";
+          lineColor = "orange";
+          if (cables[n.node_id].getElement()) cables[n.node_id].getElement().classList.remove("blink");
         } else {
-          markers[n.node_id].setStyle({ color:'green', fillColor:'green' });
-          markers[n.node_id].getElement().classList.remove("blink");
+          lineColor = "cyan";
+          if (cables[n.node_id].getElement()) cables[n.node_id].getElement().classList.remove("blink");
         }
 
-        markers[n.node_id].bindPopup(
-          `Node: ${n.node_id}<br>Status: ${n.status}<br>Vib: ${n.vibration}<br>Accel: ${n.accel}`
+        cables[n.node_id].setStyle({ color: lineColor });
+
+        cables[n.node_id].bindPopup(
+          `<b>${n.node_id}</b><br>Status: ${n.status}<br>Vib: ${n.vibration}<br>Gyro: ${n.gyroscope}<br>Photo: ${n.photodiode}`
         );
+
+        // 1. Live Readings
+        if (readingsBody) {
+          let tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${n.node_id}</td>
+            <td>${n.vibration}</td>
+            <td>${n.gyroscope}°/s</td>
+            <td>${n.photodiode}%</td>
+            <td class="${statusClass}">${n.status}</td>
+          `;
+          readingsBody.appendChild(tr);
+        }
+
+        // 2. Bending Alerts
+        if (n.is_bending && bendingAlerts) {
+          hasBending = true;
+          let bendDiv = document.createElement("div");
+          bendDiv.className = "predictive-box danger blink";
+          bendDiv.innerHTML = `⚠️ <span class="predictive-node">${n.node_id}</span> : Critical bending detected! Gyro: ${n.gyroscope}°/s, Light: ${n.photodiode}%`;
+          bendingAlerts.appendChild(bendDiv);
+        }
+
+        // 3. Predictive Analysis
+        if (predictiveAnalysis) {
+          let predColor = n.is_bending ? "danger" : (n.status === "WARNING" ? "warning" : "safe");
+          let predDiv = document.createElement("div");
+          predDiv.className = `predictive-box ${predColor}`;
+          predDiv.innerHTML = `
+            <div class="predictive-node">${n.node_id}</div>
+            <div>${n.predictive_status}</div>
+          `;
+          predictiveAnalysis.appendChild(predDiv);
+        }
       });
-    });
+
+      if (!hasBending && bendingAlerts) {
+        bendingAlerts.innerHTML = `<div style="color: #aaa; padding: 10px;">No physical stress or bending detected currently.</div>`;
+      }
+    })
+    .catch(err => console.error("Error fetching data:", err));
 }, 2000);

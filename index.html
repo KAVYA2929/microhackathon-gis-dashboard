@@ -1,49 +1,243 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Smart Optical Fiber GIS Dashboard</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    body { margin:0; background:#0b0b0b; color:white; font-family:Arial; }
-    h2 { text-align:center; margin:10px; }
-    #map { height:60vh; }
-    #panel { display:flex; gap:10px; padding:10px; }
-    .card { background:#1a1a1a; padding:10px; border-radius:8px; flex:1; text-align:center; }
-    table { width:100%; background:#111; border-collapse:collapse; }
-    th, td { border:1px solid #333; padding:5px; text-align:center; }
-    .blink { animation: blink 1s infinite; }
-    @keyframes blink { 50% { opacity:0.3; } }
+    body {
+      margin: 0;
+      background: #0b0b0b;
+      color: white;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    h2 {
+      text-align: center;
+      margin: 10px;
+      flex-shrink: 0;
+      color: #eaeaea;
+    }
+
+    .container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      width: 33.33%;
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      gap: 15px;
+      overflow-y: auto;
+      background: #111;
+      border-right: 1px solid #333;
+      transition: width 0.3s ease, padding 0.3s ease, border-right-color 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .left-panel.collapsed {
+      width: 0;
+      padding-left: 0;
+      padding-right: 0;
+      border-right-color: transparent;
+      overflow: hidden;
+    }
+
+    .right-panel {
+      width: 66.67%;
+      position: relative;
+      transition: width 0.3s ease;
+    }
+
+    .right-panel.expanded {
+      width: 100%;
+    }
+
+    #toggleBtn {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 1000;
+      background: rgba(17, 17, 17, 0.9);
+      color: white;
+      border: 1px solid #444;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 1.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    #toggleBtn:hover {
+      background: rgba(51, 51, 51, 0.9);
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+
+    .section {
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #222;
+    }
+
+    .section-title {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #4CAF50;
+      border-bottom: 1px solid #333;
+      padding-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      background: #111;
+      border-collapse: collapse;
+      font-size: 0.9em;
+    }
+
+    th,
+    td {
+      border: 1px solid #333;
+      padding: 8px 5px;
+      text-align: center;
+    }
+
+    th {
+      background: #222;
+      color: #ddd;
+    }
+
+    .predictive-box {
+      background: #111;
+      padding: 10px;
+      border: 1px solid #333;
+      margin-top: 8px;
+      border-radius: 4px;
+    }
+
+    .predictive-node {
+      font-weight: bold;
+      color: #00bcd4;
+    }
+
+    .danger {
+      color: #ff4c4c;
+      font-weight: bold;
+    }
+
+    .warning {
+      color: #ff9800;
+      font-weight: bold;
+    }
+
+    .safe {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+
+    .blink {
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0.3;
+      }
+    }
   </style>
 </head>
 
 <body>
 
-<h2>🚦 Multi-Sensor Optical Fiber Surveillance – GIS Dashboard</h2>
+  <h2>🚦 Multi-Sensor Optical Fiber Surveillance – GIS Dashboard</h2>
 
-<div id="map"></div>
+  <div class="container">
+    <!-- LEFT PANEL: DATA -->
+    <div class="left-panel" id="leftPanel">
 
-<div id="panel">
-  <div class="card">Live Multi-Node Monitoring</div>
-  <div class="card">Vibration + Accelerometer + GPS</div>
-  <div class="card">Predictive Alerts</div>
-</div>
+      <!-- SECTION 1: Live Readings -->
+      <div class="section">
+        <div class="section-title">Live Sensor Readings</div>
+        <table id="readingsTable">
+          <thead>
+            <tr>
+              <th>Cable</th>
+              <th>Vib</th>
+              <th>Gyro</th>
+              <th>Photo</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="readingsBody">
+            <!-- Rows inserted by JS -->
+          </tbody>
+        </table>
+      </div>
 
-<table id="alertTable">
-  <tr>
-    <th>Time</th>
-    <th>Node</th>
-    <th>Status</th>
-    <th>Vibration</th>
-    <th>Accel</th>
-  </tr>
-</table>
+      <!-- SECTION 2: Bending & Stress Parameters -->
+      <div class="section" id="bendingSection">
+        <div class="section-title" style="color: #ff9800;">Bending & Stress Alerts</div>
+        <div id="bendingAlerts" style="font-size: 0.9em; text-align: center; padding: 10px; color: #aaa;">
+          Awaiting sensor data...
+        </div>
+      </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="dashboard.js"></script>
+      <!-- SECTION 3: Predictive Analysis -->
+      <div class="section" style="flex: 1;">
+        <div class="section-title" style="color: #00bcd4;">Predictive Analysis Models</div>
+        <div id="predictiveAnalysis" style="font-size: 0.9em; overflow-y: auto;">
+          <!-- Dynamically filled predictive blocks -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: MAP -->
+    <div class="right-panel" id="rightPanel">
+      <button id="toggleBtn" title="Toggle Sidebar">☰</button>
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+  <script>
+    // Handle sidebar toggle
+    document.getElementById('toggleBtn').addEventListener('click', function () {
+      document.getElementById('leftPanel').classList.toggle('collapsed');
+      document.getElementById('rightPanel').classList.toggle('expanded');
+
+      // Invalidate Leaflet map size after CSS transition completes
+      setTimeout(function () {
+        if (typeof map !== 'undefined' && map !== null) {
+          map.invalidateSize();
+        }
+      }, 300);
+    });
+  </script>
 
 </body>
+
 </html>
