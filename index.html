@@ -90,7 +90,7 @@
     #toggleBtn:hover {
       background: rgba(240, 240, 240, 0.9);
     }
-    
+
     #themeToggleBtn {
       position: absolute;
       top: 15px;
@@ -202,63 +202,131 @@
         opacity: 0.3;
       }
     }
-    
+
     /* Dark Mode Overrides */
     body.dark-mode {
       background: #0b0b0b;
       color: white;
     }
-    
+
     body.dark-mode h2 {
       color: #eaeaea;
     }
-    
+
     body.dark-mode .left-panel {
       background: #111;
       border-right-color: #333;
     }
-    
-    body.dark-mode #toggleBtn, body.dark-mode #themeToggleBtn {
+
+    body.dark-mode #toggleBtn,
+    body.dark-mode #themeToggleBtn {
       background: rgba(17, 17, 17, 0.9);
       color: white;
       border-color: #444;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
     }
-    
-    body.dark-mode #toggleBtn:hover, body.dark-mode #themeToggleBtn:hover {
+
+    body.dark-mode #toggleBtn:hover,
+    body.dark-mode #themeToggleBtn:hover {
       background: rgba(51, 51, 51, 0.9);
     }
-    
+
     body.dark-mode .section {
       background: #1a1a1a;
       border-color: #222;
     }
-    
+
     body.dark-mode .section-title {
       border-bottom-color: #333;
       color: #4CAF50;
     }
-    
+
     body.dark-mode table {
       background: #111;
     }
-    
-    body.dark-mode th, body.dark-mode td {
+
+    body.dark-mode th,
+    body.dark-mode td {
       border-color: #333;
     }
-    
+
     body.dark-mode th {
       background: #222;
       color: #ddd;
     }
-    
+
     body.dark-mode .predictive-box {
       background: #111;
       border-color: #333;
     }
-    
+
     body.dark-mode .predictive-node {
       color: #00bcd4;
+    }
+
+    #lastUpdated {
+      text-align: center;
+      font-size: 0.85em;
+      color: #666;
+      margin-bottom: 10px;
+      transition: color 0.3s;
+    }
+
+    body.dark-mode #lastUpdated {
+      color: #aaa;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 800px;
+      border-radius: 8px;
+    }
+
+    body.dark-mode .modal-content {
+      background-color: #1a1a1a;
+      border-color: #444;
+      color: #fff;
+    }
+
+    .close-btn {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close-btn:hover,
+    .close-btn:focus {
+      color: black;
+      text-decoration: none;
+    }
+
+    body.dark-mode .close-btn:hover {
+      color: white;
+    }
+
+    #historyTableContainer {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 15px;
     }
   </style>
 </head>
@@ -266,6 +334,7 @@
 <body>
 
   <h2>🚦 Multi-Sensor Optical Fiber Surveillance – GIS Dashboard</h2>
+  <div id="lastUpdated">Fetching latest data...</div>
 
   <div class="container">
     <!-- LEFT PANEL: DATA -->
@@ -278,7 +347,8 @@
           <thead>
             <tr>
               <th>Cable</th>
-              <th>Vib</th>
+              <th>Vib 1</th>
+              <th>Vib 2</th>
               <th>Gyro</th>
               <th>Photo</th>
               <th>Status</th>
@@ -316,18 +386,48 @@
     </div>
   </div>
 
+  <!-- HISTORY MODAL -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeHistoryModal()">&times;</span>
+      <h3 id="historyTitle" style="margin-top:0;">History</h3>
+
+      <div id="chartContainer" style="width: 100%; height: 250px; margin-bottom: 20px;">
+        <canvas id="historyChart"></canvas>
+      </div>
+
+      <div id="historyTableContainer">
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Vib 1</th>
+              <th>Vib 2</th>
+              <th>Gyro</th>
+              <th>Photo</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <script src="dashboard.js"></script>
   <script>
     // Set global theme variable
     window.currentTheme = 'light';
-    
+
     // Handle theme toggle
     document.getElementById('themeToggleBtn').addEventListener('click', function () {
       const body = document.body;
       body.classList.toggle('dark-mode');
       const isDarkMode = body.classList.contains('dark-mode');
       this.textContent = isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode';
-      
+
       window.currentTheme = isDarkMode ? 'dark' : 'light';
       if (typeof window.updateMapTheme === 'function') {
         window.updateMapTheme(window.currentTheme);

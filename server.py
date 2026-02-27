@@ -1,9 +1,26 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-import random, time
+import random, time, pickle
+import pandas as pd
 
 app = Flask(__name__)
 CORS(app)
+
+last_update_time = 0
+current_data = []
+history_data = {f"Cable-{i}": [] for i in range(1, 11)}
+
+# LOAD TRAINED MODELS
+try:
+    with open('xgboost_fiber_model.pkl', 'rb') as f:
+        xgb_model = pickle.load(f)
+    with open('linear_regression_fiber_model.pkl', 'rb') as f:
+        lr_model = pickle.load(f)
+    print("Successfully loaded ML models.")
+except Exception as e:
+    print(f"Error loading models: {e}")
+    xgb_model = None
+    lr_model = None
 
 # SIMULATED SENSOR NODES (Representing 10 separate cables)
 NODES = [
@@ -21,41 +38,91 @@ NODES = [
 
 @app.route("/data")
 def multi_node_data():
-    output = []
+    global last_update_time, current_data, history_data
 
-    for n in NODES:
-        vibration = random.randint(100, 950)
-        accel = random.randint(0, 20)
-        gyroscope = random.randint(0, 180) # degrees per second
-        photodiode = random.randint(0, 100) # light intensity %
-        
-        # Bending logic: high gyro indicating twisting and drop in light indicating physical stress
-        is_bending = gyroscope > 120 and photodiode < 40 
+    current_time = time.time()
+    if current_time - last_update_time >= 5:
+        output = []
+        formatted_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
-        if vibration > 800 or accel > 15 or is_bending:
-            status = "DANGER"
-        elif vibration > 600 or gyroscope > 80 or photodiode < 70:
-            status = "WARNING"
-        else:
-            status = "SAFE"
+        for n in NODES:
+            vibration_1 = random.randint(100, 950)
+            vibration_2 = random.randint(100, 950)
+            accel = random.randint(0, 20)
+            gyroscope = random.randint(0, 180) # degrees per second
+            photodiode = random.randint(0, 100) # light intensity %
             
-        predictive_status = "High risk of fiber rupture at this node." if is_bending else ("Potential physical stress accumulating." if status == "WARNING" else "Fiber integrity is normal.")
+            # Bending logic: high gyro indicating twisting and drop in light indicating physical stress
+            is_bending = gyroscope > 120 and photodiode < 40 
 
-        output.append({
-            "node_id": n["id"],
-            "lat": n["lat"],
-            "lng": n["lng"],
-            "path": n["path"],
-            "vibration": vibration,
-            "accel": accel,
-            "gyroscope": gyroscope,
-            "photodiode": photodiode,
-            "is_bending": is_bending,
-            "predictive_status": predictive_status,
-            "status": status,
-            "time": time.strftime("%H:%M:%S")
-        })
+            if vibration_1 > 800 or vibration_2 > 800 or accel > 15 or is_bending:
+                status = "DANGER"
+            elif vibration_1 > 600 or vibration_2 > 600 or gyroscope > 80 or photodiode < 70:
+                status = "WARNING"
+            else:
+                status = "SAFE"
+                
+            predictive_status = "High risk of fiber rupture at this node." if is_bending else ("Potential physical stress accumulating." if status == "WARNING" else "Fiber integrity is normal.")
 
-    return jsonify(output)
+            # ML PREDICTION LOGIC
+            xgb_pred_text = "N/A"
+            lr_pred_value = 0.0
+            
+            if xgb_model and lr_model:
+                # Build dataframe matching trained dataset columns
+                input_df = pd.DataFrame({
+                    'vib_1': [vibration_1],
+                    'vib_2': [vibration_2],
+                    'gyro': [gyroscope],
+                    'photodiode': [photodiode]
+                })
+                
+                # XGBoost Classifier
+                xgb_pred = int(xgb_model.predict(input_df)[0])
+                if xgb_pred == 0:
+                    xgb_pred_text = "Safe"
+                elif xgb_pred == 1:
+                    xgb_pred_text = "Warning"
+                else:
+                    xgb_pred_text = "Critical"
+                    
+                # Linear Regression
+                lr_pred_value = round(float(lr_model.predict(input_df)[0]), 4)
+
+            reading = {
+                "node_id": n["id"],
+                "lat": n["lat"],
+                "lng": n["lng"],
+                "path": n["path"],
+                "vibration_1": vibration_1,
+                "vibration_2": vibration_2,
+                "accel": accel,
+                "gyroscope": gyroscope,
+                "photodiode": photodiode,
+                "is_bending": is_bending,
+                "predictive_status": predictive_status,
+                "xgb_prediction": xgb_pred_text,
+                "lr_prediction": lr_pred_value,
+                "status": status,
+                "time": formatted_time
+            }
+            
+            output.append(reading)
+            
+            # Keep only last 100 historical readings to prevent memory bloat
+            history_data[n["id"]].append(reading)
+            if len(history_data[n["id"]]) > 100:
+                history_data[n["id"]].pop(0)
+
+        current_data = output
+        last_update_time = current_time
+
+    return jsonify(current_data)
+
+@app.route("/history/<node_id>")
+def get_node_history(node_id):
+    if node_id in history_data:
+        return jsonify(history_data[node_id])
+    return jsonify({"error": "Node not found"}), 404
 
 app.run(host="0.0.0.0", port=5000)

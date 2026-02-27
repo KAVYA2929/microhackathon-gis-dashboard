@@ -1,0 +1,25 @@
+﻿Loading dataset...
+Training XGBoost model...
+
+Evaluating model...
+
+Accuracy: 0.9950
+
+Classification Report:
+              precision    recall  f1-score   support
+
+    Safe (0)       1.00      1.00      1.00       148
+ Warning (1)       1.00      0.97      0.99        37
+Critical (2)       0.94      1.00      0.97        15
+
+    accuracy                           0.99       200
+   macro avg       0.98      0.99      0.98       200
+weighted avg       1.00      0.99      1.00       200
+
+
+Confusion Matrix:
+[[148   0   0]
+ [  0  36   1]
+ [  0   0  15]]
+
+Model saved successfully as 'xgboost_fiber_model.pkl'
