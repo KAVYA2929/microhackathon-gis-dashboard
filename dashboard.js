@@ -1,9 +1,25 @@
 // MAP
 var map = L.map('map', { zoomControl: false }).setView([13.0, 80.25], 12);
 
-L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+var tileLayer = L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 ).addTo(map);
+
+window.updateMapTheme = function(theme) {
+  if (theme === 'dark') {
+    tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
+  } else {
+    tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
+  }
+  
+  // Update safe cable colors
+  let safeColor = (theme === 'dark') ? 'cyan' : '#1976D2';
+  for (let id in cables) {
+    if (cables[id].options.color === 'cyan' || cables[id].options.color === '#1976D2') {
+      cables[id].setStyle({ color: safeColor });
+    }
+  }
+};
 
 // STORAGE
 var cables = {};
@@ -26,14 +42,16 @@ setInterval(() => {
 
       nodes.forEach(n => {
 
+        let safeColor = (window.currentTheme === 'dark') ? 'cyan' : '#1976D2';
+
         // CREATE CABLE IF NOT EXISTS
         if (!cables[n.node_id]) {
-          cables[n.node_id] = L.polyline(n.path, { color: 'cyan', weight: 6 }).addTo(map);
+          cables[n.node_id] = L.polyline(n.path, { color: safeColor, weight: 6 }).addTo(map);
         }
 
         // STATUS COLOR
         let statusClass = "safe";
-        let lineColor = "cyan";
+        let lineColor = safeColor;
 
         if (n.status === "DANGER") {
           statusClass = "danger";
@@ -44,7 +62,7 @@ setInterval(() => {
           lineColor = "orange";
           if (cables[n.node_id].getElement()) cables[n.node_id].getElement().classList.remove("blink");
         } else {
-          lineColor = "cyan";
+          lineColor = safeColor;
           if (cables[n.node_id].getElement()) cables[n.node_id].getElement().classList.remove("blink");
         }
 
