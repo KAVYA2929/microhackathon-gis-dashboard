@@ -119,8 +119,7 @@ let dataPollTimer = setInterval(() => {
             <div class="predictive-node" style="font-size: 1.1em; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 3px;">
               ${n.node_id}
             </div>
-            <div style="margin-bottom: 4px;"><strong>XGBoost Class:</strong> <span class="${predColor}">${n.xgb_prediction}</span></div>
-            <div><strong>Linear Regression Score:</strong> <span class="${lrColor}">${n.lr_prediction}</span></div>
+            <div style="margin-bottom: 4px;"><strong>Predictive Analysis:</strong> <span class="${predColor}">${n.xgb_prediction}</span></div>
           `;
           predictiveAnalysis.appendChild(predDiv);
         }
