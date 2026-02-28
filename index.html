@@ -331,7 +331,7 @@
   </style>
 </head>
 
-<body>
+<body class="dark-mode">
 
   <h2>🚦 Multi-Sensor Optical Fiber Surveillance – GIS Dashboard</h2>
   <div id="lastUpdated">Fetching latest data...</div>
@@ -350,7 +350,7 @@
               <th>Vib 1</th>
               <th>Vib 2</th>
               <th>Gyro</th>
-              <th>Photo</th>
+              <th>Light Intensity</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -381,7 +381,7 @@
     <!-- RIGHT PANEL: MAP -->
     <div class="right-panel" id="rightPanel">
       <button id="toggleBtn" title="Toggle Sidebar">☰</button>
-      <button id="themeToggleBtn" title="Toggle Theme">🌙 Dark Mode</button>
+      <button id="themeToggleBtn" title="Toggle Theme">☀️ Light Mode</button>
       <div id="map"></div>
     </div>
   </div>
@@ -418,8 +418,8 @@
 
   <script src="dashboard.js"></script>
   <script>
-    // Set global theme variable
-    window.currentTheme = 'light';
+    // Set global theme variable — default is dark
+    window.currentTheme = 'dark';
 
     // Handle theme toggle
     document.getElementById('themeToggleBtn').addEventListener('click', function () {

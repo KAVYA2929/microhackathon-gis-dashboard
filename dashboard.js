@@ -1,8 +1,8 @@
 // MAP
-var map = L.map('map', { zoomControl: false }).setView([13.0, 80.25], 12);
+var map = L.map('map', { zoomControl: false }).setView([12.8231, 80.0444], 16);
 
 var tileLayer = L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 ).addTo(map);
 
 window.updateMapTheme = function (theme) {
@@ -130,7 +130,7 @@ let dataPollTimer = setInterval(() => {
       }
     })
     .catch(err => console.error("Error fetching data:", err));
-}, 5000);
+}, 200);
 
 // HISTORY MODAL LOGIC
 function showHistory(nodeId) {
