@@ -1,1881 +1,1025 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TANFINET – Optical Fiber Network Monitoring System</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    :root {
-      --bg: #0a0e1a;
-      --bg2: #0d1220;
-      --bg3: #111827;
-      --panel: #131c2e;
-      --panel2: #192235;
-      --border: #1e3a5f;
-      --border2: #243b5e;
-      --accent: #1e6bcd;
-      --accent2: #2563eb;
-      --accent3: #3b82f6;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
-      --green: #10b981;
-      --yellow: #f59e0b;
-      --red: #ef4444;
-      --blue: #3b82f6;
-      --cyan: #06b6d4;
-      --header-h: 56px;
-      --sidebar-w: 220px;
-      --font-mono: 'Share Tech Mono', monospace;
-      --font-ui: 'Rajdhani', sans-serif;
-      --font-body: 'Inter', sans-serif;
-    }
-
-    [data-theme="light"] {
-      --bg: #f0f4f8;
-      --bg2: #e8edf5;
-      --bg3: #dde4ef;
-      --panel: #ffffff;
-      --panel2: #f8fafc;
-      --border: #cbd5e1;
-      --border2: #94a3b8;
-      --text: #0f172a;
-      --text2: #334155;
-      --text3: #64748b;
-    }
-
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html,
-    body {
-      height: 100%;
-      overflow: hidden;
-      font-family: var(--font-body);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 13px;
-    }
-
-    #app {
-      display: grid;
-      grid-template-rows: var(--header-h) 1fr;
-      grid-template-columns: var(--sidebar-w) 1fr;
-      height: 100vh;
-    }
-
-    header {
-      grid-column: 1/-1;
-      grid-row: 1;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 16px;
-      background: var(--panel);
-      border-bottom: 1px solid var(--border);
-      z-index: 100;
-    }
-
-    .logo-block {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-    }
-
-    .logo-emblem {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #1e40af, #3b82f6);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-ui);
-      font-weight: 700;
-      font-size: 14px;
-      color: #fff;
-      letter-spacing: 1px;
-      border: 1px solid rgba(59, 130, 246, 0.4);
-    }
-
-    .logo-text {
-      font-family: var(--font-ui);
-      font-weight: 700;
-      font-size: 15px;
-      color: var(--text);
-      letter-spacing: 1px;
-    }
-
-    .logo-text span {
-      color: var(--accent3);
-      font-size: 10px;
-      display: block;
-      letter-spacing: 2px;
-      font-weight: 500;
-    }
-
-    .header-title {
-      font-family: var(--font-ui);
-      font-size: 13px;
-      color: var(--text2);
-      border-left: 1px solid var(--border);
-      padding-left: 14px;
-      line-height: 1.4;
-    }
-
-    .header-title strong {
-      color: var(--text);
-      font-size: 14px;
-      display: block;
-    }
-
-    .spacer {
-      flex: 1;
-    }
-
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .live-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 4px;
-      padding: 4px 10px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--green);
-    }
-
-    .live-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: blink 1.2s infinite;
-    }
-
-    @keyframes blink {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: 0.2;
-      }
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 10px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      background: var(--panel2);
-      color: var(--text2);
-      cursor: pointer;
-      font-family: var(--font-ui);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      transition: all .15s;
-    }
-
-    .btn:hover {
-      border-color: var(--accent3);
-      color: var(--text);
-    }
-
-    .btn-primary {
-      background: var(--accent2);
-      border-color: var(--accent2);
-      color: #fff;
-    }
-
-    .btn-primary:hover {
-      background: #1d4ed8;
-    }
-
-    .role-select {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 5px 8px;
-      border-radius: 4px;
-      font-family: var(--font-ui);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    #clock {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--cyan);
-      letter-spacing: 1px;
-    }
-
-    nav#sidebar {
-      grid-column: 1;
-      grid-row: 2;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      padding: 8px 0;
-    }
-
-    .nav-section {
-      padding: 8px 12px 3px;
-      font-size: 9px;
-      letter-spacing: 2px;
-      color: var(--text3);
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 8px 14px;
-      cursor: pointer;
-      transition: all .12s;
-      border-left: 3px solid transparent;
-      color: var(--text2);
-      font-family: var(--font-ui);
-      font-weight: 500;
-      font-size: 13px;
-      letter-spacing: 0.3px;
-      user-select: none;
-    }
-
-    .nav-item:hover,
-    .nav-item.active {
-      background: rgba(59, 130, 246, 0.08);
-      color: var(--text);
-      border-left-color: var(--accent3);
-    }
-
-    .nav-item svg {
-      width: 15px;
-      height: 15px;
-      flex-shrink: 0;
-    }
-
-    .nav-badge {
-      margin-left: auto;
-      background: var(--red);
-      color: #fff;
-      font-size: 9px;
-      padding: 1px 5px;
-      border-radius: 10px;
-      font-family: var(--font-mono);
-    }
-
-    .nav-footer {
-      margin-top: auto;
-      padding: 12px;
-      border-top: 1px solid var(--border);
-      font-size: 10px;
-      color: var(--text3);
-    }
-
-    main {
-      grid-column: 2;
-      grid-row: 2;
-      overflow: hidden;
-    }
-
-    .view {
-      display: none;
-      height: 100%;
-      flex-direction: column;
-    }
-
-    .view.active {
-      display: flex;
-    }
-
-    /* MAP */
-    #view-map {
-      flex-direction: row !important;
-    }
-
-    #view-map .stat-grid {
-      grid-template-columns: 1fr;
-      align-content: start;
-      width: 220px;
-      border-right: 1px solid var(--border);
-      border-bottom: none;
-      background: var(--panel);
-    }
-
-    #map-wrap {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
-
-    #map {
-      width: 100%;
-      height: 100%;
-    }
-
-    .map-controls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 500;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .map-legend {
-      position: absolute;
-      bottom: 20px;
-      left: 10px;
-      z-index: 500;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      font-size: 11px;
-    }
-
-    .legend-title {
-      font-family: var(--font-ui);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: var(--text2);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      color: var(--text2);
-      margin-bottom: 4px;
-    }
-
-    .ldot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .lline {
-      width: 20px;
-      height: 3px;
-      border-radius: 2px;
-      flex-shrink: 0;
-    }
-
-    .map-side {
-      width: 300px;
-      background: var(--panel);
-      border-left: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .map-side-hdr {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      font-family: var(--font-ui);
-      font-weight: 700;
-      font-size: 13px;
-      color: var(--text);
-    }
-
-    #alert-feed {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px;
-    }
-
-    /* STAT GRID */
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .stat-card {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-    }
-
-    .stat-lbl {
-      font-family: var(--font-ui);
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--text3);
-      margin-bottom: 4px;
-    }
-
-    .stat-val {
-      font-family: var(--font-mono);
-      font-size: 20px;
-      color: var(--text);
-      line-height: 1;
-    }
-
-    .stat-sub {
-      font-size: 10px;
-      color: var(--text3);
-      margin-top: 3px;
-    }
-
-    .stat-card.c-ok .stat-val {
-      color: var(--green);
-    }
-
-    .stat-card.c-warn .stat-val {
-      color: var(--yellow);
-    }
-
-    .stat-card.c-alert .stat-val {
-      color: var(--red);
-    }
-
-    /* TABLE */
-    .tbl-wrap {
-      flex: 1;
-      overflow: auto;
-      padding: 0 14px 14px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th {
-      font-family: var(--font-ui);
-      font-weight: 700;
-      font-size: 10px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text3);
-      padding: 7px 8px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg2);
-      position: sticky;
-      top: 0;
-    }
-
-    td {
-      padding: 7px 8px;
-      border-bottom: 1px solid rgba(30, 58, 95, 0.35);
-      font-size: 12px;
-    }
-
-    tr:hover td {
-      background: rgba(59, 130, 246, 0.04);
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 7px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-family: var(--font-ui);
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-
-    .b-safe {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--green);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .b-warn {
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--yellow);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .b-crit {
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--red);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .b-off {
-      background: rgba(100, 116, 139, 0.15);
-      color: var(--text3);
-      border: 1px solid rgba(100, 116, 139, 0.3);
-    }
-
-    /* CHARTS */
-    .chart-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      padding: 14px;
-      overflow: auto;
-    }
-
-    .chart-panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px;
-    }
-
-    .chart-title {
-      font-family: var(--font-ui);
-      font-weight: 700;
-      font-size: 11px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--text2);
-      margin-bottom: 10px;
-    }
-
-    /* FILTERS */
-    .filters {
-      display: flex;
-      gap: 8px;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-      flex-shrink: 0;
-    }
-
-    .f-input {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 5px 9px;
-      border-radius: 4px;
-      font-family: var(--font-body);
-      font-size: 12px;
-    }
-
-    /* NODE GRID */
-    .node-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 14px;
-      overflow: auto;
-    }
-
-    .node-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px;
-    }
-
-    .node-hdr {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .node-id {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .n-online {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 10px;
-      font-family: var(--font-ui);
-      color: var(--green);
-    }
-
-    .n-offline {
-      color: var(--red);
-    }
-
-    .nm {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
-      font-size: 11px;
-    }
-
-    .nm-lbl {
-      color: var(--text3);
-      font-family: var(--font-ui);
-    }
-
-    .nm-val {
-      font-family: var(--font-mono);
-      color: var(--text2);
-    }
-
-    .pbar {
-      height: 4px;
-      background: var(--bg3);
-      border-radius: 2px;
-      margin-top: 2px;
-      overflow: hidden;
-    }
-
-    .pfill {
-      height: 100%;
-      border-radius: 2px;
-    }
-
-    /* RISK */
-    .risk-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 14px;
-      overflow: auto;
-    }
-
-    .risk-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px;
-    }
-
-    /* REPORTS */
-    .rpt-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding: 14px;
-    }
-
-    .rpt-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 16px;
-      cursor: pointer;
-      transition: .15s;
-    }
-
-    .rpt-card:hover {
-      border-color: var(--accent3);
-    }
-
-    .rpt-icon {
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
-
-    .rpt-title {
-      font-family: var(--font-ui);
-      font-weight: 700;
-      font-size: 14px;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-
-    .rpt-desc {
-      font-size: 11px;
-      color: var(--text3);
-    }
-
-    /* SECTION HEADER */
-    .sec-hdr {
-      padding: 10px 14px;
-      font-family: var(--font-ui);
-      font-weight: 700;
-      font-size: 11px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text2);
-      border-bottom: 1px solid var(--border);
-    }
-
-    /* POPUP */
-    .leaflet-popup-content-wrapper {
-      background: var(--panel) !important;
-      border: 1px solid var(--border) !important;
-      border-radius: 6px !important;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
-      color: var(--text) !important;
-    }
-
-    .leaflet-popup-tip {
-      background: var(--panel) !important;
-    }
-
-    .pp-title {
-      font-family: var(--font-ui);
-      font-weight: 700;
-      font-size: 14px;
-      color: var(--accent3);
-      margin-bottom: 8px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 6px;
-    }
-
-    .pp-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 3px;
-      font-size: 11px;
-    }
-
-    .pp-key {
-      color: var(--text3);
-      font-family: var(--font-ui);
-    }
-
-    .pp-val {
-      font-family: var(--font-mono);
-      color: var(--text);
-    }
-
-    .pp-evt {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin-top: 6px;
-      padding: 3px 8px;
-      border-radius: 3px;
-      font-family: var(--font-ui);
-      font-weight: 700;
-      font-size: 11px;
-    }
-
-    .ev-drill {
-      background: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.4);
-    }
-
-    .ev-veh {
-      background: rgba(245, 158, 11, 0.15);
-      color: #f59e0b;
-      border: 1px solid rgba(245, 158, 11, 0.4);
-    }
-
-    .ev-exp {
-      background: rgba(59, 130, 246, 0.15);
-      color: #3b82f6;
-      border: 1px solid rgba(59, 130, 246, 0.4);
-    }
-
-    .ev-env {
-      background: rgba(16, 185, 129, 0.15);
-      color: #10b981;
-      border: 1px solid rgba(16, 185, 129, 0.4);
-    }
-
-    ::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: var(--bg2);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--border2);
-      border-radius: 3px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TANFINET – Optical Fiber Network Monitoring System</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0a0e1a;--bg2:#0d1220;--bg3:#111827;--panel:#131c2e;--panel2:#192235;
+  --border:#1e3a5f;--border2:#243b5e;--accent:#1e6bcd;--accent2:#2563eb;--accent3:#3b82f6;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --green:#10b981;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--cyan:#06b6d4;
+  --header-h:56px;--sidebar-w:220px;
+  --font-mono:'Share Tech Mono',monospace;--font-ui:'Rajdhani',sans-serif;--font-body:'Inter',sans-serif;
+}
+[data-theme="light"]{
+  --bg:#f0f4f8;--bg2:#e8edf5;--bg3:#dde4ef;--panel:#ffffff;--panel2:#f8fafc;
+  --border:#cbd5e1;--border2:#94a3b8;--text:#0f172a;--text2:#334155;--text3:#64748b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:13px;}
+#app{display:grid;grid-template-rows:var(--header-h) 1fr;grid-template-columns:var(--sidebar-w) 1fr;height:100vh;}
+header{grid-column:1/-1;grid-row:1;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--border);z-index:100;}
+.logo-block{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.logo-emblem{width:36px;height:36px;background:linear-gradient(135deg,#1e40af,#3b82f6);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-ui);font-weight:700;font-size:14px;color:#fff;letter-spacing:1px;border:1px solid rgba(59,130,246,0.4);}
+.logo-text{font-family:var(--font-ui);font-weight:700;font-size:15px;color:var(--text);letter-spacing:1px;}
+.logo-text span{color:var(--accent3);font-size:10px;display:block;letter-spacing:2px;font-weight:500;}
+.header-title{font-family:var(--font-ui);font-size:13px;color:var(--text2);border-left:1px solid var(--border);padding-left:14px;line-height:1.4;}
+.header-title strong{color:var(--text);font-size:14px;display:block;}
+.spacer{flex:1;}
+.header-controls{display:flex;align-items:center;gap:8px;}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:4px;padding:4px 10px;font-family:var(--font-mono);font-size:11px;color:var(--green);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:4px;border:1px solid var(--border);background:var(--panel2);color:var(--text2);cursor:pointer;font-family:var(--font-ui);font-size:12px;font-weight:600;letter-spacing:0.5px;transition:all .15s;}
+.btn:hover{border-color:var(--accent3);color:var(--text);}
+.btn-primary{background:var(--accent2);border-color:var(--accent2);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.role-select{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-family:var(--font-ui);font-size:12px;font-weight:600;cursor:pointer;}
+#clock{font-family:var(--font-mono);font-size:12px;color:var(--cyan);letter-spacing:1px;}
+nav#sidebar{grid-column:1;grid-row:2;background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;padding:8px 0;}
+.nav-section{padding:8px 12px 3px;font-size:9px;letter-spacing:2px;color:var(--text3);font-weight:600;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;transition:all .12s;border-left:3px solid transparent;color:var(--text2);font-family:var(--font-ui);font-weight:500;font-size:13px;letter-spacing:0.3px;user-select:none;}
+.nav-item:hover,.nav-item.active{background:rgba(59,130,246,0.08);color:var(--text);border-left-color:var(--accent3);}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;font-family:var(--font-mono);}
+.nav-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);}
+main{grid-column:2;grid-row:2;overflow:hidden;}
+.view{display:none;height:100%;flex-direction:column;}
+.view.active{display:flex;}
+/* MAP */
+#view-map{flex-direction:row!important;}
+#map-wrap{flex:1;position:relative;overflow:hidden;}
+#map{width:100%;height:100%;}
+.map-controls{position:absolute;top:10px;right:10px;z-index:500;display:flex;flex-direction:column;gap:6px;}
+.map-legend{position:absolute;bottom:20px;left:10px;z-index:500;background:rgba(13,18,32,0.92);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:11px;}
+.legend-title{font-family:var(--font-ui);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;}
+.legend-item{display:flex;align-items:center;gap:7px;color:var(--text2);margin-bottom:4px;}
+.ldot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.lline{width:20px;height:3px;border-radius:2px;flex-shrink:0;}
+.map-side{width:300px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.map-side-hdr{padding:12px 14px;border-bottom:1px solid var(--border);font-family:var(--font-ui);font-weight:700;font-size:13px;color:var(--text);}
+#alert-feed{flex:1;overflow-y:auto;padding:8px;}
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.stat-card{background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;}
+.stat-lbl{font-family:var(--font-ui);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
+.stat-val{font-family:var(--font-mono);font-size:20px;color:var(--text);line-height:1;}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+.stat-card.c-ok .stat-val{color:var(--green);}
+.stat-card.c-warn .stat-val{color:var(--yellow);}
+.stat-card.c-alert .stat-val{color:var(--red);}
+/* TABLE */
+.tbl-wrap{flex:1;overflow:auto;padding:0 14px 14px;}
+table{width:100%;border-collapse:collapse;}
+th{font-family:var(--font-ui);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:7px 8px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;}
+td{padding:7px 8px;border-bottom:1px solid rgba(30,58,95,0.35);font-size:12px;}
+tr:hover td{background:rgba(59,130,246,0.04);}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;font-size:10px;font-family:var(--font-ui);font-weight:700;letter-spacing:0.5px;}
+.b-safe{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);}
+.b-warn{background:rgba(245,158,11,0.15);color:var(--yellow);border:1px solid rgba(245,158,11,0.3);}
+.b-crit{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+.b-off{background:rgba(100,116,139,0.15);color:var(--text3);border:1px solid rgba(100,116,139,0.3);}
+/* CHARTS */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px;overflow:auto;}
+.chart-panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px;}
+.chart-title{font-family:var(--font-ui);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:10px;}
+/* FILTERS */
+.filters{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;flex-shrink:0;}
+.f-input{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:4px;font-family:var(--font-body);font-size:12px;}
+/* NODE GRID */
+.node-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px;overflow:auto;}
+.node-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px;}
+.node-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.node-id{font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--text);}
+.n-online{display:flex;align-items:center;gap:4px;font-size:10px;font-family:var(--font-ui);color:var(--green);}
+.n-offline{color:var(--red);}
+.nm{display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;}
+.nm-lbl{color:var(--text3);font-family:var(--font-ui);}
+.nm-val{font-family:var(--font-mono);color:var(--text2);}
+.pbar{height:4px;background:var(--bg3);border-radius:2px;margin-top:2px;overflow:hidden;}
+.pfill{height:100%;border-radius:2px;}
+/* RISK */
+.risk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px;overflow:auto;}
+.risk-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px;}
+/* REPORTS */
+.rpt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;}
+.rpt-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px;cursor:pointer;transition:.15s;}
+.rpt-card:hover{border-color:var(--accent3);}
+.rpt-icon{font-size:28px;margin-bottom:8px;}
+.rpt-title{font-family:var(--font-ui);font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px;}
+.rpt-desc{font-size:11px;color:var(--text3);}
+/* SECTION HEADER */
+.sec-hdr{padding:10px 14px;font-family:var(--font-ui);font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);border-bottom:1px solid var(--border);}
+/* POPUP */
+.leaflet-popup-content-wrapper{background:var(--panel)!important;border:1px solid var(--border)!important;border-radius:6px!important;box-shadow:0 8px 32px rgba(0,0,0,0.5)!important;color:var(--text)!important;}
+.leaflet-popup-tip{background:var(--panel)!important;}
+.pp-title{font-family:var(--font-ui);font-weight:700;font-size:14px;color:var(--accent3);margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:6px;}
+.pp-row{display:flex;justify-content:space-between;gap:16px;margin-bottom:3px;font-size:11px;}
+.pp-key{color:var(--text3);font-family:var(--font-ui);}
+.pp-val{font-family:var(--font-mono);color:var(--text);}
+.pp-evt{display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:3px 8px;border-radius:3px;font-family:var(--font-ui);font-weight:700;font-size:11px;}
+.ev-drill{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.4);}
+.ev-veh{background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.4);}
+.ev-exp{background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.4);}
+.ev-env{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.4);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+</style>
 </head>
-
 <body>
-  <div id="app">
+<div id="app">
 
-    <!-- HEADER -->
-    <header>
-      <div class="logo-block">
-        <img src="tanfinet.png" alt="TANFINET Logo"
-          style="height: 36px; width: auto; object-fit: contain; border-radius: 6px;">
-        <div class="logo-text">TANFINET<span>OPTICAL FIBER NETWORK</span></div>
-      </div>
-      <div class="header-title">
-        <strong>Optical Fiber Intrusion Detection &amp; Monitoring System</strong>
-        Tamil Nadu Infrastructure — Statewide Operations Center
-      </div>
-      <div class="spacer"></div>
-      <div class="header-controls">
-        <div class="live-badge"><span class="live-dot"></span>LIVE</div>
-        <span id="clock">--:--:--</span>
-        <select class="role-select" id="roleSelect">
-          <option value="admin">👤 Admin</option>
-          <option value="operator">🔧 Operator</option>
-          <option value="viewer">👁 Viewer</option>
-        </select>
-        <button class="btn" id="themeBtn">🌓 Theme</button>
-        <button class="btn btn-primary" id="alertBtn">⚠ Test Alert</button>
-      </div>
-    </header>
+<!-- HEADER -->
+<header>
+  <div class="logo-block">
+    <div class="logo-emblem">TN</div>
+    <div class="logo-text">TANFINET<span>OPTICAL FIBER NETWORK</span></div>
+  </div>
+  <div class="header-title">
+    <strong>Optical Fiber Intrusion Detection &amp; Monitoring System</strong>
+    Tamil Nadu Infrastructure — Statewide Operations Center
+  </div>
+  <div class="spacer"></div>
+  <div class="header-controls">
+    <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+    <span id="clock">--:--:--</span>
+    <select class="role-select" id="roleSelect">
+      <option value="admin">👤 Admin</option>
+      <option value="operator">🔧 Operator</option>
+      <option value="viewer">👁 Viewer</option>
+    </select>
+    <button class="btn" id="themeBtn">🌓 Theme</button>
+    <button class="btn btn-primary" id="alertBtn">⚠ Test Alert</button>
+  </div>
+</header>
 
-    <!-- SIDEBAR -->
-    <nav id="sidebar">
-      <div class="nav-section">Monitoring</div>
-      <div class="nav-item active" data-view="map">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 11l19-9-9 19-2-8-8-2z" />
-        </svg>
-        Live GIS Map <span class="nav-badge" id="alertBadge">3</span>
-      </div>
-      <div class="nav-item" data-view="sensors">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.07 4.93A10 10 0 0 1 21 12M4.93 4.93A10 10 0 0 0 3 12" />
-          <path d="M16.24 7.76A6 6 0 0 1 18 12M7.76 7.76A6 6 0 0 0 6 12" />
-        </svg>
-        Sensor Monitor
-      </div>
-      <div class="nav-section">Operations</div>
-      <div class="nav-item" data-view="history">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-        Detection History
-      </div>
-      <div class="nav-item" data-view="nodes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="3" width="20" height="14" rx="2" />
-          <line x1="8" y1="21" x2="16" y2="21" />
-          <line x1="12" y1="17" x2="12" y2="21" />
-        </svg>
-        Node Health
-      </div>
-      <div class="nav-item" data-view="risk">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-          <line x1="12" y1="9" x2="12" y2="13" />
-          <line x1="12" y1="17" x2="12.01" y2="17" />
-        </svg>
-        Risk Engine
-      </div>
-      <div class="nav-section">Reports</div>
-      <div class="nav-item" data-view="reports">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-        </svg>
-        Reports &amp; Export
-      </div>
-      <div class="nav-footer">
-        <div style="font-family:var(--font-mono);">SYS v2.4.1 · TN-NOC</div>
-        <div>Last sync: <span id="lastSync">--</span></div>
-      </div>
-    </nav>
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="nav-section">Monitoring</div>
+  <div class="nav-item active" data-view="map">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+    Live GIS Map <span class="nav-badge" id="alertBadge">3</span>
+  </div>
+  <div class="nav-item" data-view="sensors">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 1 21 12M4.93 4.93A10 10 0 0 0 3 12"/><path d="M16.24 7.76A6 6 0 0 1 18 12M7.76 7.76A6 6 0 0 0 6 12"/></svg>
+    Sensor Monitor
+  </div>
+  <div class="nav-item" data-view="analytics">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Analytics
+  </div>
+  <div class="nav-section">Operations</div>
+  <div class="nav-item" data-view="history">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Detection History
+  </div>
+  <div class="nav-item" data-view="nodes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    Node Health
+  </div>
+  <div class="nav-item" data-view="risk">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Risk Engine
+  </div>
+  <div class="nav-section">Reports</div>
+  <div class="nav-item" data-view="reports">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Reports &amp; Export
+  </div>
+  <div class="nav-footer">
+    <div style="font-family:var(--font-mono);">SYS v2.4.1 · TN-NOC</div>
+    <div>Last sync: <span id="lastSync">--</span></div>
+  </div>
+</nav>
 
-    <!-- MAIN -->
-    <main>
+<!-- MAIN -->
+<main>
 
-      <!-- MAP VIEW -->
-      <div id="view-map" class="view active">
-        <div class="stat-grid">
-          <div class="stat-card c-ok">
-            <div class="stat-lbl">Active Nodes</div>
-            <div class="stat-val" id="s-active">24</div>
-            <div class="stat-sub">of 24 total</div>
-          </div>
-          <div class="stat-card c-warn">
-            <div class="stat-lbl">Warnings</div>
-            <div class="stat-val" id="s-warn">5</div>
-            <div class="stat-sub">3 districts</div>
-          </div>
-          <div class="stat-card c-alert">
-            <div class="stat-lbl">Critical Alerts</div>
-            <div class="stat-val" id="s-crit">2</div>
-            <div class="stat-sub">Immediate action</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-lbl">Avg Fiber Health</div>
-            <div class="stat-val" id="s-health">74%</div>
-            <div class="stat-sub">Moderate</div>
-          </div>
+  <!-- MAP VIEW -->
+  <div id="view-map" class="view active">
+    <div class="stat-grid">
+      <div class="stat-card c-ok"><div class="stat-lbl">Active Nodes</div><div class="stat-val" id="s-active">24</div><div class="stat-sub">of 24 total</div></div>
+      <div class="stat-card c-warn"><div class="stat-lbl">Warnings</div><div class="stat-val" id="s-warn">5</div><div class="stat-sub">3 districts</div></div>
+      <div class="stat-card c-alert"><div class="stat-lbl">Critical Alerts</div><div class="stat-val" id="s-crit">2</div><div class="stat-sub">Immediate action</div></div>
+      <div class="stat-card"><div class="stat-lbl">Avg Fiber Health</div><div class="stat-val" id="s-health">74%</div><div class="stat-sub">Moderate</div></div>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden;">
+      <div id="map-wrap">
+        <div id="map"></div>
+        <div class="map-controls">
+          <button class="btn" id="mapResetBtn">⊕ Reset View</button>
+          <button class="btn" id="routeToggleBtn">〜 Routes</button>
         </div>
-        <div style="flex:1;display:flex;overflow:hidden;">
-          <div id="map-wrap">
-            <div id="map"></div>
-            <div class="map-controls">
-              <button class="btn" id="mapResetBtn">⊕ Reset View</button>
-              <button class="btn" id="routeToggleBtn">〜 Routes</button>
-            </div>
-            <div class="map-legend">
-              <div class="legend-title">Legend</div>
-              <div class="legend-item">
-                <div class="ldot" style="background:#10b981"></div>Safe Node
-              </div>
-              <div class="legend-item">
-                <div class="ldot" style="background:#f59e0b"></div>Warning Node
-              </div>
-              <div class="legend-item">
-                <div class="ldot" style="background:#ef4444"></div>Critical Node
-              </div>
-              <div class="legend-item">
-                <div class="lline" style="background:#3b82f6"></div>Fiber Backbone
-              </div>
-              <div class="legend-item">
-                <div class="lline" style="background:#ef4444;opacity:.5"></div>High-Risk Zone
-              </div>
-              <div class="legend-item">
-                <div class="ldot" style="background:#7c3aed"></div>Past Incident
-              </div>
-            </div>
-          </div>
-          <div class="map-side">
-            <div class="map-side-hdr">🛰 Live Alert Feed</div>
-            <div id="alert-feed"></div>
-          </div>
+        <div class="map-legend">
+          <div class="legend-title">Legend</div>
+          <div class="legend-item"><div class="ldot" style="background:#10b981"></div>Safe Node</div>
+          <div class="legend-item"><div class="ldot" style="background:#f59e0b"></div>Warning Node</div>
+          <div class="legend-item"><div class="ldot" style="background:#ef4444"></div>Critical Node</div>
+          <div class="legend-item"><div class="lline" style="background:#3b82f6"></div>Fiber Backbone</div>
+          <div class="legend-item"><div class="lline" style="background:#ef4444;opacity:.5"></div>High-Risk Zone</div>
+          <div class="legend-item"><div class="ldot" style="background:#7c3aed"></div>Past Incident</div>
         </div>
       </div>
-
-      <!-- SENSOR VIEW -->
-      <div id="view-sensors" class="view">
-        <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-lbl">Sampling Rate</div>
-            <div class="stat-val">50Hz</div>
-            <div class="stat-sub">Continuous</div>
-          </div>
-          <div class="stat-card c-ok">
-            <div class="stat-lbl">Normal</div>
-            <div class="stat-val" id="sn-ok">17</div>
-            <div class="stat-sub">No anomaly</div>
-          </div>
-          <div class="stat-card c-warn">
-            <div class="stat-lbl">Warning</div>
-            <div class="stat-val" id="sn-warn">5</div>
-            <div class="stat-sub">Monitor</div>
-          </div>
-          <div class="stat-card c-alert">
-            <div class="stat-lbl">Critical</div>
-            <div class="stat-val" id="sn-crit">2</div>
-            <div class="stat-sub">Act now</div>
-          </div>
-        </div>
-        <div class="sec-hdr">Live Sensor Data Stream — Auto-refresh every 2s</div>
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Cable ID</th>
-                <th>Location</th>
-                <th>Vib (Hz)</th>
-                <th>Gyro (°/s)</th>
-                <th>Light (lux)</th>
-                <th>Status</th>
-                <th>Health</th>
-                <th>Risk%</th>
-                <th>Event</th>
-                <th>Conf%</th>
-                <th>Priority</th>
-                <th>Last Seen</th>
-              </tr>
-            </thead>
-            <tbody id="sensor-tbody"></tbody>
-          </table>
-        </div>
+      <div class="map-side">
+        <div class="map-side-hdr">🛰 Live Alert Feed</div>
+        <div id="alert-feed"></div>
       </div>
-
-      <!-- HISTORY VIEW -->
-      <div id="view-history" class="view">
-        <div class="filters">
-          <input type="date" class="f-input" id="f-from">
-          <input type="date" class="f-input" id="f-to">
-          <select class="f-input" id="f-dist">
-            <option value="">All Districts</option>
-            <option>Chennai</option>
-            <option>Coimbatore</option>
-            <option>Madurai</option>
-            <option>Salem</option>
-            <option>Trichy</option>
-            <option>Tirunelveli</option>
-            <option>Vellore</option>
-            <option>Erode</option>
-            <option>Thanjavur</option>
-            <option>Kancheepuram</option>
-            <option>Dindigul</option>
-            <option>Namakkal</option>
-          </select>
-          <input class="f-input" placeholder="Cable ID..." id="f-cable">
-          <button class="btn btn-primary" id="filterBtn">🔍 Filter</button>
-          <button class="btn" id="resetFilterBtn">↺ Reset</button>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th></th>
-                <th>Timestamp</th>
-                <th>Cable ID</th>
-                <th>Location</th>
-                <th>Event</th>
-                <th>Severity</th>
-                <th>Status</th>
-                <th>Technician</th>
-              </tr>
-            </thead>
-            <tbody id="history-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- NODE HEALTH VIEW -->
-      <div id="view-nodes" class="view" style="overflow:auto;">
-        <div class="stat-grid">
-          <div class="stat-card c-ok">
-            <div class="stat-lbl">Online</div>
-            <div class="stat-val" id="nd-on">22</div>
-          </div>
-          <div class="stat-card c-alert">
-            <div class="stat-lbl">Offline</div>
-            <div class="stat-val" id="nd-off">2</div>
-          </div>
-          <div class="stat-card c-warn">
-            <div class="stat-lbl">Low Battery</div>
-            <div class="stat-val" id="nd-bat">4</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-lbl">Avg Signal</div>
-            <div class="stat-val" id="nd-sig">-67dBm</div>
-          </div>
-        </div>
-        <div class="filters" style="border-bottom:none; padding-bottom:0px;">
-          <input class="f-input" placeholder="Search by Node ID or District..." id="f-node-search"
-            style="max-width:300px; flex:1;">
-        </div>
-        <div class="node-grid" id="node-grid"></div>
-      </div>
-
-      <!-- RISK ENGINE VIEW -->
-      <div id="view-risk" class="view" style="overflow:auto;">
-        <div style="padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;">
-          <div style="font-family:var(--font-ui);font-weight:700;font-size:15px;color:var(--text);">Fiber Health &amp;
-            Risk Engine</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:3px;">Real-time scoring: sensor fusion · alert
-            frequency · historical disturbance data</div>
-        </div>
-        <div class="filters" style="border-bottom:none; padding:10px 14px 0;">
-          <input class="f-input" placeholder="Search by Node ID or District..." id="f-risk-search"
-            style="max-width:300px; flex:1;">
-        </div>
-        <div class="risk-grid" id="risk-grid"></div>
-      </div>
-
-      <!-- REPORTS VIEW -->
-      <div id="view-reports" class="view" style="overflow:auto;">
-        <div style="padding:14px 14px 10px;border-bottom:1px solid var(--border);">
-          <div style="font-family:var(--font-ui);font-weight:700;font-size:16px;color:var(--text);">Reports &amp; Export
-            Center</div>
-          <div style="color:var(--text3);font-size:12px;margin-top:3px;">Generate, export, and download operational
-            reports for TANFINET infrastructure.</div>
-        </div>
-        <div class="rpt-grid">
-          <div class="rpt-card" id="rpt-csv">
-            <div class="rpt-icon">📊</div>
-            <div class="rpt-title">Export Sensor Data (CSV)</div>
-            <div class="rpt-desc">Download complete sensor readings and live event log as a CSV spreadsheet.</div>
-          </div>
-          <div class="rpt-card" id="rpt-pdf">
-            <div class="rpt-icon">📄</div>
-            <div class="rpt-title">Incident Report (PDF)</div>
-            <div class="rpt-desc">Generate formatted PDF report with incidents, risk scores, and analytics.</div>
-          </div>
-          <div class="rpt-card" id="rpt-map">
-            <div class="rpt-icon">🗺</div>
-            <div class="rpt-title">Print GIS Snapshot</div>
-            <div class="rpt-desc">Print or save current GIS map view with all active markers and routes.</div>
-          </div>
-          <div class="rpt-card" id="rpt-log">
-            <div class="rpt-icon">📋</div>
-            <div class="rpt-title">Download Incident Logs</div>
-            <div class="rpt-desc">Export complete detection history with technician notes and resolution status.</div>
-          </div>
-        </div>
-        <div style="padding:14px;">
-          <div class="sec-hdr" style="padding:0 0 8px;border:none;">System Status Summary</div>
-          <div id="rpt-summary"
-            style="font-family:var(--font-mono);font-size:12px;color:var(--text2);line-height:2;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;">
-          </div>
-        </div>
-      </div>
-
-    </main>
+    </div>
   </div>
 
-  <script>
-    (function () {
-      'use strict';
+  <!-- SENSOR VIEW -->
+  <div id="view-sensors" class="view">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-lbl">Sampling Rate</div><div class="stat-val">50Hz</div><div class="stat-sub">Continuous</div></div>
+      <div class="stat-card c-ok"><div class="stat-lbl">Normal</div><div class="stat-val" id="sn-ok">17</div><div class="stat-sub">No anomaly</div></div>
+      <div class="stat-card c-warn"><div class="stat-lbl">Warning</div><div class="stat-val" id="sn-warn">5</div><div class="stat-sub">Monitor</div></div>
+      <div class="stat-card c-alert"><div class="stat-lbl">Critical</div><div class="stat-val" id="sn-crit">2</div><div class="stat-sub">Act now</div></div>
+    </div>
+    <div class="sec-hdr">Live Sensor Data Stream — Auto-refresh every 2s</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cable ID</th><th>Location</th><th>Vib (Hz)</th><th>Gyro (°/s)</th>
+            <th>Light (lux)</th><th>Status</th><th>Health</th><th>Risk%</th>
+            <th>Event</th><th>Conf%</th><th>Priority</th><th>Last Seen</th>
+          </tr>
+        </thead>
+        <tbody id="sensor-tbody"></tbody>
+      </table>
+    </div>
+  </div>
 
-      // ═══════════════════════════════════════════════
-      // DATA
-      // ═══════════════════════════════════════════════
-      var NODES = [
-        { id: 'TN-CHN-001', district: 'Chennai', lat: 13.08, lng: 80.27 },
-        { id: 'TN-CHN-002', district: 'Chennai', lat: 13.04, lng: 80.25 },
-        { id: 'TN-CHN-003', district: 'Chennai', lat: 13.12, lng: 80.30 },
-        { id: 'TN-CBE-001', district: 'Coimbatore', lat: 11.02, lng: 76.97 },
-        { id: 'TN-CBE-002', district: 'Coimbatore', lat: 11.05, lng: 77.02 },
-        { id: 'TN-CBE-003', district: 'Coimbatore', lat: 10.98, lng: 76.94 },
-        { id: 'TN-MDU-001', district: 'Madurai', lat: 9.93, lng: 78.12 },
-        { id: 'TN-MDU-002', district: 'Madurai', lat: 9.90, lng: 78.15 },
-        { id: 'TN-MDU-003', district: 'Madurai', lat: 9.95, lng: 78.08 },
-        { id: 'TN-SLM-001', district: 'Salem', lat: 11.67, lng: 78.15 },
-        { id: 'TN-SLM-002', district: 'Salem', lat: 11.63, lng: 78.10 },
-        { id: 'TN-TRY-001', district: 'Trichy', lat: 10.81, lng: 78.69 },
-        { id: 'TN-TRY-002', district: 'Trichy', lat: 10.84, lng: 78.72 },
-        { id: 'TN-TRY-003', district: 'Trichy', lat: 10.78, lng: 78.65 },
-        { id: 'TN-TNJ-001', district: 'Thanjavur', lat: 10.79, lng: 79.14 },
-        { id: 'TN-VEL-001', district: 'Vellore', lat: 12.92, lng: 79.13 },
-        { id: 'TN-ERD-001', district: 'Erode', lat: 11.34, lng: 77.73 },
-        { id: 'TN-TNV-001', district: 'Tirunelveli', lat: 8.73, lng: 77.70 },
-        { id: 'TN-KCH-001', district: 'Kancheepuram', lat: 12.84, lng: 79.70 },
-        { id: 'TN-DGL-001', district: 'Dindigul', lat: 10.36, lng: 77.98 },
-        { id: 'TN-NMK-001', district: 'Namakkal', lat: 11.22, lng: 78.17 },
-        { id: 'TN-DHM-001', district: 'Dharmapuri', lat: 12.13, lng: 78.16 },
-        { id: 'TN-VRD-001', district: 'Virudhunagar', lat: 9.59, lng: 77.96 },
-        { id: 'TN-TTK-001', district: 'Thoothukudi', lat: 8.81, lng: 78.15 }
-      ];
+  <!-- ANALYTICS VIEW -->
+  <div id="view-analytics" class="view" style="overflow:auto;">
+    <div class="chart-grid">
+      <div class="chart-panel" style="grid-column:1/-1;"><div class="chart-title">📈 Vibration Trend — 24 Hour Timeline</div><canvas id="chart-vib" height="80"></canvas></div>
+      <div class="chart-panel"><div class="chart-title">🔄 Gyroscope Variation</div><canvas id="chart-gyro" height="120"></canvas></div>
+      <div class="chart-panel"><div class="chart-title">💡 Light Spike Analysis</div><canvas id="chart-light" height="120"></canvas></div>
+      <div class="chart-panel"><div class="chart-title">📍 Incidents by District</div><canvas id="chart-dist" height="120"></canvas></div>
+      <div class="chart-panel"><div class="chart-title">📉 Alert Trend Over Time</div><canvas id="chart-alert" height="120"></canvas></div>
+    </div>
+  </div>
 
-      var DISTRICTS = ['Chennai', 'Coimbatore', 'Madurai', 'Salem', 'Trichy', 'Tirunelveli', 'Vellore', 'Erode', 'Thanjavur', 'Kancheepuram', 'Dharmapuri', 'Namakkal'];
-      var TECHS = ['V. Kumar', 'S. Raj', 'P. Murugan', 'A. Devi', 'R. Selvam'];
-      var EV_TYPES = ['Drilling', 'Heavy Vehicle', 'Cable Exposure', 'Environmental'];
-      var STATUSES = ['Open', 'Assigned', 'Resolved'];
+  <!-- HISTORY VIEW -->
+  <div id="view-history" class="view">
+    <div class="filters">
+      <input type="date" class="f-input" id="f-from">
+      <input type="date" class="f-input" id="f-to">
+      <select class="f-input" id="f-dist">
+        <option value="">All Districts</option>
+        <option>Chennai</option><option>Coimbatore</option><option>Madurai</option>
+        <option>Salem</option><option>Trichy</option><option>Tirunelveli</option>
+        <option>Vellore</option><option>Erode</option><option>Thanjavur</option>
+        <option>Kancheepuram</option><option>Dindigul</option><option>Namakkal</option>
+      </select>
+      <input class="f-input" placeholder="Cable ID..." id="f-cable">
+      <button class="btn btn-primary" id="filterBtn">🔍 Filter</button>
+      <button class="btn" id="resetFilterBtn">↺ Reset</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th></th><th>Timestamp</th><th>Cable ID</th><th>Location</th><th>Event</th><th>Severity</th><th>Status</th><th>Technician</th></tr>
+        </thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </div>
 
-      function rand(a, b) { return Math.random() * (b - a) + a; }
-      function randInt(a, b) { return Math.floor(rand(a, b)); }
-      function nowStr() { return new Date().toLocaleTimeString('en-IN', { hour12: false }); }
+  <!-- NODE HEALTH VIEW -->
+  <div id="view-nodes" class="view" style="overflow:auto;">
+    <div class="stat-grid">
+      <div class="stat-card c-ok"><div class="stat-lbl">Online</div><div class="stat-val" id="nd-on">22</div></div>
+      <div class="stat-card c-alert"><div class="stat-lbl">Offline</div><div class="stat-val" id="nd-off">2</div></div>
+      <div class="stat-card c-warn"><div class="stat-lbl">Low Battery</div><div class="stat-val" id="nd-bat">4</div></div>
+      <div class="stat-card"><div class="stat-lbl">Avg Signal</div><div class="stat-val" id="nd-sig">-67dBm</div></div>
+    </div>
+    <div class="node-grid" id="node-grid"></div>
+  </div>
 
-      // Sensor State
-      var state = {};
-      NODES.forEach(function (n) {
-        state[n.id] = {
-          id: n.id, district: n.district, lat: n.lat, lng: n.lng,
-          vib: rand(0.5, 2.5), gyro: rand(0.1, 1.0), light: rand(50, 180),
-          health: rand(70, 95), risk: rand(5, 25), status: 'safe',
-          event: 'Environmental', conf: rand(60, 80), priority: 'P3'
-        };
-      });
-      // Inject critical/warning nodes
-      function setCrit(id, v, g, l, risk, health) {
-        var s = state[id];
-        s.vib = v; s.gyro = g; s.light = l; s.risk = risk; s.health = health;
-      }
-      setCrit('TN-CHN-001', 9.8, 6.2, 120, 92, 28);
-      state['TN-CHN-001'].status = 'critical'; state['TN-CHN-001'].event = 'Drilling'; state['TN-CHN-001'].priority = 'P1'; state['TN-CHN-001'].conf = 94;
-      setCrit('TN-MDU-001', 7.3, 1.2, 95, 76, 41);
-      state['TN-MDU-001'].status = 'critical'; state['TN-MDU-001'].event = 'Heavy Vehicle'; state['TN-MDU-001'].priority = 'P1'; state['TN-MDU-001'].conf = 82;
-      setCrit('TN-CBE-001', 4.5, 0.8, 140, 52, 62);
-      state['TN-CBE-001'].status = 'warning'; state['TN-CBE-001'].event = 'Heavy Vehicle'; state['TN-CBE-001'].priority = 'P2'; state['TN-CBE-001'].conf = 71;
-      state['TN-TRY-001'].light = 980; state['TN-TRY-001'].status = 'warning'; state['TN-TRY-001'].event = 'Cable Exposure'; state['TN-TRY-001'].risk = 44; state['TN-TRY-001'].health = 58; state['TN-TRY-001'].priority = 'P2'; state['TN-TRY-001'].conf = 68;
-      state['TN-VEL-001'].vib = 3.8; state['TN-VEL-001'].status = 'warning'; state['TN-VEL-001'].event = 'Heavy Vehicle'; state['TN-VEL-001'].risk = 41; state['TN-VEL-001'].health = 67; state['TN-VEL-001'].priority = 'P2';
+  <!-- RISK ENGINE VIEW -->
+  <div id="view-risk" class="view" style="overflow:auto;">
+    <div style="padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div style="font-family:var(--font-ui);font-weight:700;font-size:15px;color:var(--text);">Fiber Health &amp; Risk Engine</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px;">Real-time scoring: sensor fusion · alert frequency · historical disturbance data</div>
+    </div>
+    <div class="risk-grid" id="risk-grid"></div>
+  </div>
 
-      // Node Health
-      var nodeHealth = {};
-      NODES.forEach(function (n) {
-        nodeHealth[n.id] = {
-          battery: rand(35, 100),
-          signal: -rand(55, 88),
-          lastSync: new Date(),
-          firmware: 'v3.2.1',
-          online: Math.random() > 0.08
-        };
-      });
+  <!-- REPORTS VIEW -->
+  <div id="view-reports" class="view" style="overflow:auto;">
+    <div style="padding:14px 14px 10px;border-bottom:1px solid var(--border);">
+      <div style="font-family:var(--font-ui);font-weight:700;font-size:16px;color:var(--text);">Reports &amp; Export Center</div>
+      <div style="color:var(--text3);font-size:12px;margin-top:3px;">Generate, export, and download operational reports for TANFINET infrastructure.</div>
+    </div>
+    <div class="rpt-grid">
+      <div class="rpt-card" id="rpt-csv"><div class="rpt-icon">📊</div><div class="rpt-title">Export Sensor Data (CSV)</div><div class="rpt-desc">Download complete sensor readings and live event log as a CSV spreadsheet.</div></div>
+      <div class="rpt-card" id="rpt-pdf"><div class="rpt-icon">📄</div><div class="rpt-title">Incident Report (PDF)</div><div class="rpt-desc">Generate formatted PDF report with incidents, risk scores, and analytics.</div></div>
+      <div class="rpt-card" id="rpt-map"><div class="rpt-icon">🗺</div><div class="rpt-title">Print GIS Snapshot</div><div class="rpt-desc">Print or save current GIS map view with all active markers and routes.</div></div>
+      <div class="rpt-card" id="rpt-log"><div class="rpt-icon">📋</div><div class="rpt-title">Download Incident Logs</div><div class="rpt-desc">Export complete detection history with technician notes and resolution status.</div></div>
+    </div>
+    <div style="padding:14px;">
+      <div class="sec-hdr" style="padding:0 0 8px;border:none;">System Status Summary</div>
+      <div id="rpt-summary" style="font-family:var(--font-mono);font-size:12px;color:var(--text2);line-height:2;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;"></div>
+    </div>
+  </div>
 
-      // History
-      var historyData = [];
-      for (var i = 0; i < 80; i++) {
-        var n = NODES[randInt(0, NODES.length)];
-        var ev = EV_TYPES[randInt(0, EV_TYPES.length)];
-        var sev = ev === 'Drilling' ? 'Critical' : ev === 'Heavy Vehicle' ? 'High' : ev === 'Cable Exposure' ? 'Medium' : 'Low';
-        historyData.push({
-          ts: new Date(Date.now() - rand(0, 7 * 24 * 3600000)),
-          cable: n.id, location: n.district, event: ev, severity: sev,
-          status: STATUSES[randInt(0, STATUSES.length)],
-          tech: TECHS[randInt(0, TECHS.length)],
-          notes: ev === 'Drilling'
-            ? 'Unauthorized excavation detected near cable trench. Field team dispatched. Area cordoned off pending inspection.'
-            : 'Anomaly pattern detected. Automated alert generated. Technician review completed.'
-        });
-      }
-      historyData.sort(function (a, b) { return b.ts - a.ts; });
+</main>
+</div>
 
-      // ═══════════════════════════════════════════════
-      // CLOCK
-      // ═══════════════════════════════════════════════
-      function updateClock() {
-        var now = new Date();
-        var el = document.getElementById('clock');
-        var ls = document.getElementById('lastSync');
-        if (el) el.textContent = now.toLocaleTimeString('en-IN', { hour12: false });
-        if (ls) ls.textContent = now.toLocaleTimeString('en-IN', { hour12: false });
-      }
-      setInterval(updateClock, 1000);
-      updateClock();
+<script>
+(function() {
+'use strict';
 
-      // ═══════════════════════════════════════════════
-      // THEME
-      // ═══════════════════════════════════════════════
-      var dark = true;
-      var currentTileLayer = null;
-      document.getElementById('themeBtn').addEventListener('click', function () {
-        dark = !dark;
-        document.documentElement.setAttribute('data-theme', dark ? '' : 'light');
-        if (currentTileLayer) {
-          currentTileLayer.setUrl(dark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
-        }
-      });
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+var NODES = [
+  {id:'TN-CHN-001',district:'Chennai',lat:13.08,lng:80.27},
+  {id:'TN-CHN-002',district:'Chennai',lat:13.04,lng:80.25},
+  {id:'TN-CHN-003',district:'Chennai',lat:13.12,lng:80.30},
+  {id:'TN-CBE-001',district:'Coimbatore',lat:11.02,lng:76.97},
+  {id:'TN-CBE-002',district:'Coimbatore',lat:11.05,lng:77.02},
+  {id:'TN-CBE-003',district:'Coimbatore',lat:10.98,lng:76.94},
+  {id:'TN-MDU-001',district:'Madurai',lat:9.93,lng:78.12},
+  {id:'TN-MDU-002',district:'Madurai',lat:9.90,lng:78.15},
+  {id:'TN-MDU-003',district:'Madurai',lat:9.95,lng:78.08},
+  {id:'TN-SLM-001',district:'Salem',lat:11.67,lng:78.15},
+  {id:'TN-SLM-002',district:'Salem',lat:11.63,lng:78.10},
+  {id:'TN-TRY-001',district:'Trichy',lat:10.81,lng:78.69},
+  {id:'TN-TRY-002',district:'Trichy',lat:10.84,lng:78.72},
+  {id:'TN-TRY-003',district:'Trichy',lat:10.78,lng:78.65},
+  {id:'TN-TNJ-001',district:'Thanjavur',lat:10.79,lng:79.14},
+  {id:'TN-VEL-001',district:'Vellore',lat:12.92,lng:79.13},
+  {id:'TN-ERD-001',district:'Erode',lat:11.34,lng:77.73},
+  {id:'TN-TNV-001',district:'Tirunelveli',lat:8.73,lng:77.70},
+  {id:'TN-KCH-001',district:'Kancheepuram',lat:12.84,lng:79.70},
+  {id:'TN-DGL-001',district:'Dindigul',lat:10.36,lng:77.98},
+  {id:'TN-NMK-001',district:'Namakkal',lat:11.22,lng:78.17},
+  {id:'TN-DHM-001',district:'Dharmapuri',lat:12.13,lng:78.16},
+  {id:'TN-VRD-001',district:'Virudhunagar',lat:9.59,lng:77.96},
+  {id:'TN-TTK-001',district:'Thoothukudi',lat:8.81,lng:78.15}
+];
 
-      // ═══════════════════════════════════════════════
-      // ROLE
-      // ═══════════════════════════════════════════════
-      document.getElementById('roleSelect').addEventListener('change', function () {
-        var alertBtn = document.getElementById('alertBtn');
-        alertBtn.style.display = this.value === 'viewer' ? 'none' : '';
-      });
+var DISTRICTS = ['Chennai','Coimbatore','Madurai','Salem','Trichy','Tirunelveli','Vellore','Erode','Thanjavur','Kancheepuram','Dharmapuri','Namakkal'];
+var TECHS = ['V. Kumar','S. Raj','P. Murugan','A. Devi','R. Selvam'];
+var EV_TYPES = ['Drilling','Heavy Vehicle','Cable Exposure','Environmental'];
+var STATUSES = ['Open','Assigned','Resolved'];
 
-      // ═══════════════════════════════════════════════
-      // NAV
-      // ═══════════════════════════════════════════════
-      var chartsInited = false;
-      var mapInited = false;
+function rand(a, b) { return Math.random() * (b - a) + a; }
+function randInt(a, b) { return Math.floor(rand(a, b)); }
+function nowStr() { return new Date().toLocaleTimeString('en-IN', {hour12:false}); }
 
-      document.querySelectorAll('.nav-item').forEach(function (item) {
-        item.addEventListener('click', function () {
-          var view = this.getAttribute('data-view');
-          document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
-          document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('active'); });
-          this.classList.add('active');
-          var el = document.getElementById('view-' + view);
-          if (el) el.classList.add('active');
-          if (view === 'map' && !mapInited) initMap();
-          if (view === 'analytics' && !chartsInited) initCharts();
-          if (view === 'sensors') renderSensors();
-          if (view === 'history') renderHistory(historyData);
-          if (view === 'nodes') {
-            var nSearch = document.getElementById('f-node-search');
-            renderNodes(nSearch ? nSearch.value : '');
-          }
-          if (view === 'risk') {
-            var rSearch = document.getElementById('f-risk-search');
-            renderRisk(rSearch ? rSearch.value : '');
-          }
-          if (view === 'reports') renderReports();
-        });
-      });
+// Sensor State
+var state = {};
+NODES.forEach(function(n) {
+  state[n.id] = {
+    id: n.id, district: n.district, lat: n.lat, lng: n.lng,
+    vib: rand(0.5, 2.5), gyro: rand(0.1, 1.0), light: rand(50, 180),
+    health: rand(70, 95), risk: rand(5, 25), status: 'safe',
+    event: 'Environmental', conf: rand(60, 80), priority: 'P3'
+  };
+});
+// Inject critical/warning nodes
+function setCrit(id, v, g, l, risk, health) {
+  var s = state[id];
+  s.vib = v; s.gyro = g; s.light = l; s.risk = risk; s.health = health;
+}
+setCrit('TN-CHN-001', 9.8, 6.2, 120, 92, 28);
+state['TN-CHN-001'].status = 'critical'; state['TN-CHN-001'].event = 'Drilling'; state['TN-CHN-001'].priority = 'P1'; state['TN-CHN-001'].conf = 94;
+setCrit('TN-MDU-001', 7.3, 1.2, 95, 76, 41);
+state['TN-MDU-001'].status = 'critical'; state['TN-MDU-001'].event = 'Heavy Vehicle'; state['TN-MDU-001'].priority = 'P1'; state['TN-MDU-001'].conf = 82;
+setCrit('TN-CBE-001', 4.5, 0.8, 140, 52, 62);
+state['TN-CBE-001'].status = 'warning'; state['TN-CBE-001'].event = 'Heavy Vehicle'; state['TN-CBE-001'].priority = 'P2'; state['TN-CBE-001'].conf = 71;
+state['TN-TRY-001'].light = 980; state['TN-TRY-001'].status = 'warning'; state['TN-TRY-001'].event = 'Cable Exposure'; state['TN-TRY-001'].risk = 44; state['TN-TRY-001'].health = 58; state['TN-TRY-001'].priority = 'P2'; state['TN-TRY-001'].conf = 68;
+state['TN-VEL-001'].vib = 3.8; state['TN-VEL-001'].status = 'warning'; state['TN-VEL-001'].event = 'Heavy Vehicle'; state['TN-VEL-001'].risk = 41; state['TN-VEL-001'].health = 67; state['TN-VEL-001'].priority = 'P2';
 
-      // ═══════════════════════════════════════════════
-      // MAP
-      // ═══════════════════════════════════════════════
-      var leafMap, markers = {}, routeLines = [], routesOn = true;
+// Node Health
+var nodeHealth = {};
+NODES.forEach(function(n) {
+  nodeHealth[n.id] = {
+    battery: rand(35, 100),
+    signal: -rand(55, 88),
+    lastSync: new Date(),
+    firmware: 'v3.2.1',
+    online: Math.random() > 0.08
+  };
+});
 
-      function getColor(s) {
-        return s.status === 'critical' ? '#ef4444' : s.status === 'warning' ? '#f59e0b' : '#10b981';
-      }
+// History
+var historyData = [];
+for (var i = 0; i < 80; i++) {
+  var n = NODES[randInt(0, NODES.length)];
+  var ev = EV_TYPES[randInt(0, EV_TYPES.length)];
+  var sev = ev === 'Drilling' ? 'Critical' : ev === 'Heavy Vehicle' ? 'High' : ev === 'Cable Exposure' ? 'Medium' : 'Low';
+  historyData.push({
+    ts: new Date(Date.now() - rand(0, 7*24*3600000)),
+    cable: n.id, location: n.district, event: ev, severity: sev,
+    status: STATUSES[randInt(0, STATUSES.length)],
+    tech: TECHS[randInt(0, TECHS.length)],
+    notes: ev === 'Drilling'
+      ? 'Unauthorized excavation detected near cable trench. Field team dispatched. Area cordoned off pending inspection.'
+      : 'Anomaly pattern detected. Automated alert generated. Technician review completed.'
+  });
+}
+historyData.sort(function(a, b) { return b.ts - a.ts; });
 
-      function makeIcon(color) {
-        return L.divIcon({
-          className: '',
-          html: '<div style="width:13px;height:13px;border-radius:50%;background:' + color + ';border:2px solid rgba(255,255,255,0.4);box-shadow:0 0 8px ' + color + '88;"></div>',
-          iconSize: [13, 13], iconAnchor: [6, 6]
-        });
-      }
+// ═══════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════
+function updateClock() {
+  var now = new Date();
+  var el = document.getElementById('clock');
+  var ls = document.getElementById('lastSync');
+  if (el) el.textContent = now.toLocaleTimeString('en-IN', {hour12:false});
+  if (ls) ls.textContent = now.toLocaleTimeString('en-IN', {hour12:false});
+}
+setInterval(updateClock, 1000);
+updateClock();
 
-      function buildPopup(s) {
-        var hColor = s.health >= 80 ? '#10b981' : s.health >= 50 ? '#f59e0b' : '#ef4444';
-        var rColor = s.risk > 70 ? '#ef4444' : s.risk > 40 ? '#f59e0b' : '#10b981';
-        var evCls = s.event === 'Drilling' ? 'ev-drill' : s.event === 'Heavy Vehicle' ? 'ev-veh' : s.event === 'Cable Exposure' ? 'ev-exp' : 'ev-env';
-        return '<div class="pp-title">📡 ' + s.id + '</div>' +
-          '<div class="pp-row"><span class="pp-key">District</span><span class="pp-val">' + s.district + '</span></div>' +
-          '<div class="pp-row"><span class="pp-key">Coords</span><span class="pp-val">' + s.lat.toFixed(4) + ', ' + s.lng.toFixed(4) + '</span></div>' +
-          '<div class="pp-row"><span class="pp-key">Vibration</span><span class="pp-val">' + s.vib.toFixed(2) + ' Hz</span></div>' +
-          '<div class="pp-row"><span class="pp-key">Gyroscope</span><span class="pp-val">' + s.gyro.toFixed(2) + ' °/s</span></div>' +
-          '<div class="pp-row"><span class="pp-key">Light</span><span class="pp-val">' + Math.round(s.light) + ' lux</span></div>' +
-          '<div class="pp-row"><span class="pp-key">Health Score</span><span class="pp-val" style="color:' + hColor + '">' + Math.round(s.health) + '/100</span></div>' +
-          '<div class="pp-row"><span class="pp-key">Risk Score</span><span class="pp-val" style="color:' + rColor + '">' + Math.round(s.risk) + '%</span></div>' +
-          '<div class="pp-row"><span class="pp-key">Last Detection</span><span class="pp-val">' + nowStr() + '</span></div>' +
-          '<div><span class="pp-evt ' + evCls + '">⚡ ' + s.event + ' · ' + Math.round(s.conf) + '% conf · ' + s.priority + '</span></div>';
-      }
+// ═══════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════
+var dark = true;
+document.getElementById('themeBtn').addEventListener('click', function() {
+  dark = !dark;
+  document.documentElement.setAttribute('data-theme', dark ? '' : 'light');
+});
 
-      function initMap() {
-        mapInited = true;
-        leafMap = L.map('map', { zoomControl: true }).setView([11.0, 78.5], 7);
-        currentTileLayer = L.tileLayer(dark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          attribution: 'TANFINET NOC', maxZoom: 18
-        }).addTo(leafMap);
+// ═══════════════════════════════════════════════
+// ROLE
+// ═══════════════════════════════════════════════
+document.getElementById('roleSelect').addEventListener('change', function() {
+  var alertBtn = document.getElementById('alertBtn');
+  alertBtn.style.display = this.value === 'viewer' ? 'none' : '';
+});
 
-        // Fiber routes
-        var routes = [
-          [[13.08, 80.27], [12.92, 79.70], [11.67, 78.15], [11.34, 77.73], [11.02, 76.97]],
-          [[13.08, 80.27], [12.13, 78.16], [11.22, 78.17], [10.81, 78.69], [10.79, 79.14], [9.93, 78.12]],
-          [[10.81, 78.69], [10.36, 77.98], [9.59, 77.96], [8.73, 77.70], [8.81, 78.15]],
-          [[11.02, 76.97], [10.36, 77.98]],
-          [[9.93, 78.12], [9.59, 77.96]]
-        ];
-        routes.forEach(function (r) {
-          var line = L.polyline(r, { color: '#3b82f6', weight: 2.5, opacity: 0.7, dashArray: '8,4' }).addTo(leafMap);
-          routeLines.push(line);
-        });
+// ═══════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════
+var chartsInited = false;
+var mapInited = false;
 
-        // Risk zones
-        L.circle([13.08, 80.27], { radius: 9000, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.07, weight: 1, dashArray: '5,5' })
-          .addTo(leafMap)
-          .bindPopup('<b style="color:#ef4444">⚠ High-Risk Drilling Zone</b><br>Chennai Urban Corridor<br>Active construction activity reported');
-        L.circle([9.93, 78.12], { radius: 7000, color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.06, weight: 1, dashArray: '5,5' })
-          .addTo(leafMap)
-          .bindPopup('<b style="color:#f59e0b">⚠ Moderate Risk Zone</b><br>Madurai District<br>Heavy traffic corridor');
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function() {
+    var view = this.getAttribute('data-view');
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+    this.classList.add('active');
+    var el = document.getElementById('view-' + view);
+    if (el) el.classList.add('active');
+    if (view === 'map' && !mapInited) initMap();
+    if (view === 'analytics' && !chartsInited) initCharts();
+    if (view === 'sensors') renderSensors();
+    if (view === 'history') renderHistory(historyData);
+    if (view === 'nodes') renderNodes();
+    if (view === 'risk') renderRisk();
+    if (view === 'reports') renderReports();
+  });
+});
 
-        // Nodes
-        NODES.forEach(function (n) {
-          var s = state[n.id];
-          var m = L.marker([n.lat, n.lng], { icon: makeIcon(getColor(s)) }).addTo(leafMap);
-          m.bindPopup(buildPopup(s), { maxWidth: 280 });
-          markers[n.id] = m;
-        });
+// ═══════════════════════════════════════════════
+// MAP
+// ═══════════════════════════════════════════════
+var leafMap, markers = {}, routeLines = [], routesOn = true;
 
-        // Past incidents
-        var incidents = [
-          { lat: 12.00, lng: 79.8, lbl: 'Past Incident: Cable Cut — Nov 2024' },
-          { lat: 10.50, lng: 77.5, lbl: 'Past Incident: Drilling — Jan 2025' }
-        ];
-        incidents.forEach(function (inc) {
-          L.circleMarker([inc.lat, inc.lng], { radius: 7, color: '#a78bfa', fillColor: '#7c3aed', fillOpacity: 0.85, weight: 2 })
-            .addTo(leafMap)
-            .bindPopup('<div style="color:#a78bfa;font-weight:700;">' + inc.lbl + '</div>');
-        });
+function getColor(s) {
+  return s.status === 'critical' ? '#ef4444' : s.status === 'warning' ? '#f59e0b' : '#10b981';
+}
 
-        document.getElementById('mapResetBtn').addEventListener('click', function () {
-          leafMap.setView([11.0, 78.5], 7);
-        });
-        document.getElementById('routeToggleBtn').addEventListener('click', function () {
-          routesOn = !routesOn;
-          routeLines.forEach(function (l) { routesOn ? l.addTo(leafMap) : l.remove(); });
-          document.getElementById('routeToggleBtn').textContent = routesOn ? '〜 Routes' : '〜 Hidden';
-        });
+function makeIcon(color) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:13px;height:13px;border-radius:50%;background:' + color + ';border:2px solid rgba(255,255,255,0.4);box-shadow:0 0 8px ' + color + '88;"></div>',
+    iconSize: [13,13], iconAnchor: [6,6]
+  });
+}
 
-        renderAlertFeed();
-      }
+function buildPopup(s) {
+  var hColor = s.health >= 80 ? '#10b981' : s.health >= 50 ? '#f59e0b' : '#ef4444';
+  var rColor = s.risk > 70 ? '#ef4444' : s.risk > 40 ? '#f59e0b' : '#10b981';
+  var evCls = s.event === 'Drilling' ? 'ev-drill' : s.event === 'Heavy Vehicle' ? 'ev-veh' : s.event === 'Cable Exposure' ? 'ev-exp' : 'ev-env';
+  return '<div class="pp-title">📡 ' + s.id + '</div>' +
+    '<div class="pp-row"><span class="pp-key">District</span><span class="pp-val">' + s.district + '</span></div>' +
+    '<div class="pp-row"><span class="pp-key">Coords</span><span class="pp-val">' + s.lat.toFixed(4) + ', ' + s.lng.toFixed(4) + '</span></div>' +
+    '<div class="pp-row"><span class="pp-key">Vibration</span><span class="pp-val">' + s.vib.toFixed(2) + ' Hz</span></div>' +
+    '<div class="pp-row"><span class="pp-key">Gyroscope</span><span class="pp-val">' + s.gyro.toFixed(2) + ' °/s</span></div>' +
+    '<div class="pp-row"><span class="pp-key">Light</span><span class="pp-val">' + Math.round(s.light) + ' lux</span></div>' +
+    '<div class="pp-row"><span class="pp-key">Health Score</span><span class="pp-val" style="color:' + hColor + '">' + Math.round(s.health) + '/100</span></div>' +
+    '<div class="pp-row"><span class="pp-key">Risk Score</span><span class="pp-val" style="color:' + rColor + '">' + Math.round(s.risk) + '%</span></div>' +
+    '<div class="pp-row"><span class="pp-key">Last Detection</span><span class="pp-val">' + nowStr() + '</span></div>' +
+    '<div><span class="pp-evt ' + evCls + '">⚡ ' + s.event + ' · ' + Math.round(s.conf) + '% conf · ' + s.priority + '</span></div>';
+}
 
-      function updateMapMarkers() {
-        if (!mapInited) return;
-        NODES.forEach(function (n) {
-          var s = state[n.id];
-          if (markers[n.id]) {
-            markers[n.id].setIcon(makeIcon(getColor(s)));
-            if (markers[n.id].isPopupOpen()) markers[n.id].setPopupContent(buildPopup(s));
-          }
-        });
-        renderAlertFeed();
-      }
+function initMap() {
+  mapInited = true;
+  leafMap = L.map('map', {zoomControl:true}).setView([11.0, 78.5], 7);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: 'TANFINET NOC', maxZoom: 18
+  }).addTo(leafMap);
 
-      function renderAlertFeed() {
-        var feed = document.getElementById('alert-feed');
-        if (!feed) return;
-        var alerts = Object.values(state).filter(function (s) { return s.status !== 'safe'; });
-        alerts.sort(function (a, b) { return b.risk - a.risk; });
-        if (alerts.length === 0) {
-          feed.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:11px;text-align:center;">✅ No active alerts</div>';
-          return;
-        }
-        feed.innerHTML = alerts.map(function (s) {
-          var col = s.status === 'critical' ? 'var(--red)' : 'var(--yellow)';
-          return '<div style="border:1px solid ' + col + '33;border-radius:4px;padding:8px;margin-bottom:6px;border-left:3px solid ' + col + ';">' +
-            '<div style="font-family:var(--font-ui);font-weight:700;font-size:12px;color:' + col + ';">' + s.id + '</div>' +
-            '<div style="color:var(--text2);font-size:10px;margin-top:2px;">' + s.district + ' · ' + s.event + '</div>' +
-            '<div style="display:flex;gap:10px;margin-top:3px;font-family:var(--font-mono);font-size:10px;color:var(--text3);">' +
-            '<span>Vib: ' + s.vib.toFixed(1) + '</span>' +
-            '<span>Risk: ' + Math.round(s.risk) + '%</span>' +
-            '<span>' + s.priority + '</span></div></div>';
-        }).join('');
-      }
+  // Fiber routes
+  var routes = [
+    [[13.08,80.27],[12.92,79.70],[11.67,78.15],[11.34,77.73],[11.02,76.97]],
+    [[13.08,80.27],[12.13,78.16],[11.22,78.17],[10.81,78.69],[10.79,79.14],[9.93,78.12]],
+    [[10.81,78.69],[10.36,77.98],[9.59,77.96],[8.73,77.70],[8.81,78.15]],
+    [[11.02,76.97],[10.36,77.98]],
+    [[9.93,78.12],[9.59,77.96]]
+  ];
+  routes.forEach(function(r) {
+    var line = L.polyline(r, {color:'#3b82f6', weight:2.5, opacity:0.7, dashArray:'8,4'}).addTo(leafMap);
+    routeLines.push(line);
+  });
 
-      // ═══════════════════════════════════════════════
-      // SENSOR TABLE
-      // ═══════════════════════════════════════════════
-      function classifyEvent(s) {
-        if (s.vib > 7 && s.gyro > 3) return { event: 'Drilling', priority: 'P1', conf: rand(86, 97) };
-        if (s.vib > 5) return { event: 'Heavy Vehicle', priority: 'P1', conf: rand(75, 90) };
-        if (s.light > 500 && s.vib < 2) return { event: 'Cable Exposure', priority: 'P2', conf: rand(65, 85) };
-        if (s.vib > 2.5) return { event: 'Heavy Vehicle', priority: 'P2', conf: rand(60, 78) };
-        return { event: 'Environmental', priority: 'P3', conf: rand(55, 72) };
-      }
+  // Risk zones
+  L.circle([13.08,80.27], {radius:9000, color:'#ef4444', fillColor:'#ef4444', fillOpacity:0.07, weight:1, dashArray:'5,5'})
+    .addTo(leafMap)
+    .bindPopup('<b style="color:#ef4444">⚠ High-Risk Drilling Zone</b><br>Chennai Urban Corridor<br>Active construction activity reported');
+  L.circle([9.93,78.12], {radius:7000, color:'#f59e0b', fillColor:'#f59e0b', fillOpacity:0.06, weight:1, dashArray:'5,5'})
+    .addTo(leafMap)
+    .bindPopup('<b style="color:#f59e0b">⚠ Moderate Risk Zone</b><br>Madurai District<br>Heavy traffic corridor');
 
-      function vibColor(v) { return v > 5 ? 'var(--red)' : v > 2.5 ? 'var(--yellow)' : 'var(--green)'; }
-      function gyroColor(g) { return g > 3 ? 'var(--red)' : g > 1 ? 'var(--yellow)' : 'var(--green)'; }
-      function lightColor(l) { return l > 400 ? 'var(--yellow)' : 'var(--text2)'; }
-      function healthColor(h) { return h >= 80 ? 'var(--green)' : h >= 50 ? 'var(--yellow)' : 'var(--red)'; }
-      function riskColor(r) { return r > 70 ? 'var(--red)' : r > 40 ? 'var(--yellow)' : 'var(--green)'; }
-      function priorityColor(p) { return p === 'P1' ? 'var(--red)' : p === 'P2' ? 'var(--yellow)' : 'var(--text3)'; }
-      function evColor(ev) { return ev === 'Drilling' ? 'var(--red)' : ev === 'Cable Exposure' ? 'var(--blue)' : 'var(--yellow)'; }
-      function statusBadgeClass(st) { return st === 'critical' ? 'b-crit' : st === 'warning' ? 'b-warn' : 'b-safe'; }
+  // Nodes
+  NODES.forEach(function(n) {
+    var s = state[n.id];
+    var m = L.marker([n.lat, n.lng], {icon: makeIcon(getColor(s))}).addTo(leafMap);
+    m.bindPopup(buildPopup(s), {maxWidth:280});
+    markers[n.id] = m;
+  });
 
-      function renderSensors() {
-        var tbody = document.getElementById('sensor-tbody');
-        if (!tbody) return;
-        var rows = '';
-        var now = nowStr();
-        Object.values(state).forEach(function (s) {
-          var ev = classifyEvent(s);
-          rows += '<tr>' +
-            '<td><span style="font-family:var(--font-mono);font-weight:700;">' + s.id + '</span></td>' +
-            '<td>' + s.district + '</td>' +
-            '<td><span style="color:' + vibColor(s.vib) + ';font-family:var(--font-mono);">' + s.vib.toFixed(2) + '</span></td>' +
-            '<td><span style="color:' + gyroColor(s.gyro) + ';font-family:var(--font-mono);">' + s.gyro.toFixed(2) + '</span></td>' +
-            '<td><span style="color:' + lightColor(s.light) + ';font-family:var(--font-mono);">' + Math.round(s.light) + '</span></td>' +
-            '<td><span class="badge ' + statusBadgeClass(s.status) + '">' + s.status.toUpperCase() + '</span></td>' +
-            '<td><span style="color:' + healthColor(s.health) + ';font-family:var(--font-mono);font-weight:700;">' + Math.round(s.health) + '</span></td>' +
-            '<td><span style="color:' + riskColor(s.risk) + ';font-family:var(--font-mono);">' + Math.round(s.risk) + '%</span></td>' +
-            '<td><span style="font-size:10px;color:' + evColor(ev.event) + ';">' + ev.event + '</span></td>' +
-            '<td><span style="font-family:var(--font-mono);font-size:11px;">' + Math.round(ev.conf) + '%</span></td>' +
-            '<td><span style="color:' + priorityColor(ev.priority) + ';font-weight:700;font-family:var(--font-ui);">' + ev.priority + '</span></td>' +
-            '<td><span style="color:var(--text3);font-family:var(--font-mono);">' + now + '</span></td>' +
-            '</tr>';
-        });
-        tbody.innerHTML = rows;
-        updateStatCounts();
-      }
+  // Past incidents
+  var incidents = [
+    {lat:12.00, lng:79.8, lbl:'Past Incident: Cable Cut — Nov 2024'},
+    {lat:10.50, lng:77.5, lbl:'Past Incident: Drilling — Jan 2025'}
+  ];
+  incidents.forEach(function(inc) {
+    L.circleMarker([inc.lat, inc.lng], {radius:7, color:'#a78bfa', fillColor:'#7c3aed', fillOpacity:0.85, weight:2})
+      .addTo(leafMap)
+      .bindPopup('<div style="color:#a78bfa;font-weight:700;">' + inc.lbl + '</div>');
+  });
 
-      function updateStatCounts() {
-        var crit = 0, warn = 0, safe = 0;
-        Object.values(state).forEach(function (s) {
-          if (s.status === 'critical') crit++;
-          else if (s.status === 'warning') warn++;
-          else safe++;
-        });
-        var avgH = Math.round(Object.values(state).reduce(function (a, s) { return a + s.health; }, 0) / NODES.length);
+  document.getElementById('mapResetBtn').addEventListener('click', function() {
+    leafMap.setView([11.0, 78.5], 7);
+  });
+  document.getElementById('routeToggleBtn').addEventListener('click', function() {
+    routesOn = !routesOn;
+    routeLines.forEach(function(l) { routesOn ? l.addTo(leafMap) : l.remove(); });
+    document.getElementById('routeToggleBtn').textContent = routesOn ? '〜 Routes' : '〜 Hidden';
+  });
 
-        function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
-        set('s-crit', crit); set('s-warn', warn); set('s-active', safe + warn + crit); set('s-health', avgH + '%');
-        set('sn-ok', safe); set('sn-warn', warn); set('sn-crit', crit);
-        set('alertBadge', crit + warn);
-      }
+  renderAlertFeed();
+}
 
-      // ═══════════════════════════════════════════════
-      // CHARTS
-      // ═══════════════════════════════════════════════
-      var chartInstances = {};
-      function initCharts() {
-        chartsInited = true;
-        var hours = [];
-        for (var i = 0; i < 24; i++) hours.push(('0' + i).slice(-2) + ':00');
+function updateMapMarkers() {
+  if (!mapInited) return;
+  NODES.forEach(function(n) {
+    var s = state[n.id];
+    if (markers[n.id]) {
+      markers[n.id].setIcon(makeIcon(getColor(s)));
+      if (markers[n.id].isPopupOpen()) markers[n.id].setPopupContent(buildPopup(s));
+    }
+  });
+  renderAlertFeed();
+}
 
-        function genArr(min, max) {
-          return hours.map(function () { return rand(min, max); });
-        }
+function renderAlertFeed() {
+  var feed = document.getElementById('alert-feed');
+  if (!feed) return;
+  var alerts = Object.values(state).filter(function(s) { return s.status !== 'safe'; });
+  alerts.sort(function(a, b) { return b.risk - a.risk; });
+  if (alerts.length === 0) {
+    feed.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:11px;text-align:center;">✅ No active alerts</div>';
+    return;
+  }
+  feed.innerHTML = alerts.map(function(s) {
+    var col = s.status === 'critical' ? 'var(--red)' : 'var(--yellow)';
+    return '<div style="border:1px solid ' + col + '33;border-radius:4px;padding:8px;margin-bottom:6px;border-left:3px solid ' + col + ';">' +
+      '<div style="font-family:var(--font-ui);font-weight:700;font-size:12px;color:' + col + ';">' + s.id + '</div>' +
+      '<div style="color:var(--text2);font-size:10px;margin-top:2px;">' + s.district + ' · ' + s.event + '</div>' +
+      '<div style="display:flex;gap:10px;margin-top:3px;font-family:var(--font-mono);font-size:10px;color:var(--text3);">' +
+      '<span>Vib: ' + s.vib.toFixed(1) + '</span>' +
+      '<span>Risk: ' + Math.round(s.risk) + '%</span>' +
+      '<span>' + s.priority + '</span></div></div>';
+  }).join('');
+}
 
-        var base = {
-          responsive: true, maintainAspectRatio: true,
-          plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
-          scales: {
-            x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(30,58,95,0.4)' } },
-            y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(30,58,95,0.4)' } }
-          }
-        };
+// ═══════════════════════════════════════════════
+// SENSOR TABLE
+// ═══════════════════════════════════════════════
+function classifyEvent(s) {
+  if (s.vib > 7 && s.gyro > 3) return {event:'Drilling', priority:'P1', conf: rand(86,97)};
+  if (s.vib > 5) return {event:'Heavy Vehicle', priority:'P1', conf: rand(75,90)};
+  if (s.light > 500 && s.vib < 2) return {event:'Cable Exposure', priority:'P2', conf: rand(65,85)};
+  if (s.vib > 2.5) return {event:'Heavy Vehicle', priority:'P2', conf: rand(60,78)};
+  return {event:'Environmental', priority:'P3', conf: rand(55,72)};
+}
 
-        chartInstances.vib = new Chart(document.getElementById('chart-vib'), {
-          type: 'line',
-          data: {
-            labels: hours,
-            datasets: [
-              { label: 'TN-CHN-001', data: genArr(1, 10), borderColor: '#ef4444', fill: false, tension: 0.3, borderWidth: 1.5, pointRadius: 0 },
-              { label: 'TN-CBE-001', data: genArr(0.5, 5), borderColor: '#f59e0b', fill: false, tension: 0.3, borderWidth: 1.5, pointRadius: 0 },
-              { label: 'TN-MDU-001', data: genArr(0.3, 8), borderColor: '#3b82f6', fill: false, tension: 0.3, borderWidth: 1.5, pointRadius: 0 }
-            ]
-          },
-          options: base
-        });
+function vibColor(v) { return v > 5 ? 'var(--red)' : v > 2.5 ? 'var(--yellow)' : 'var(--green)'; }
+function gyroColor(g) { return g > 3 ? 'var(--red)' : g > 1 ? 'var(--yellow)' : 'var(--green)'; }
+function lightColor(l) { return l > 400 ? 'var(--yellow)' : 'var(--text2)'; }
+function healthColor(h) { return h >= 80 ? 'var(--green)' : h >= 50 ? 'var(--yellow)' : 'var(--red)'; }
+function riskColor(r) { return r > 70 ? 'var(--red)' : r > 40 ? 'var(--yellow)' : 'var(--green)'; }
+function priorityColor(p) { return p === 'P1' ? 'var(--red)' : p === 'P2' ? 'var(--yellow)' : 'var(--text3)'; }
+function evColor(ev) { return ev === 'Drilling' ? 'var(--red)' : ev === 'Cable Exposure' ? 'var(--blue)' : 'var(--yellow)'; }
+function statusBadgeClass(st) { return st === 'critical' ? 'b-crit' : st === 'warning' ? 'b-warn' : 'b-safe'; }
 
-        chartInstances.gyro = new Chart(document.getElementById('chart-gyro'), {
-          type: 'line',
-          data: {
-            labels: hours,
-            datasets: [{ label: 'Avg Gyro °/s', data: genArr(0.1, 7), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', fill: true, tension: 0.4, borderWidth: 1.5, pointRadius: 0 }]
-          },
-          options: base
-        });
+function renderSensors() {
+  var tbody = document.getElementById('sensor-tbody');
+  if (!tbody) return;
+  var rows = '';
+  var now = nowStr();
+  Object.values(state).forEach(function(s) {
+    var ev = classifyEvent(s);
+    rows += '<tr>' +
+      '<td><span style="font-family:var(--font-mono);font-weight:700;">' + s.id + '</span></td>' +
+      '<td>' + s.district + '</td>' +
+      '<td><span style="color:' + vibColor(s.vib) + ';font-family:var(--font-mono);">' + s.vib.toFixed(2) + '</span></td>' +
+      '<td><span style="color:' + gyroColor(s.gyro) + ';font-family:var(--font-mono);">' + s.gyro.toFixed(2) + '</span></td>' +
+      '<td><span style="color:' + lightColor(s.light) + ';font-family:var(--font-mono);">' + Math.round(s.light) + '</span></td>' +
+      '<td><span class="badge ' + statusBadgeClass(s.status) + '">' + s.status.toUpperCase() + '</span></td>' +
+      '<td><span style="color:' + healthColor(s.health) + ';font-family:var(--font-mono);font-weight:700;">' + Math.round(s.health) + '</span></td>' +
+      '<td><span style="color:' + riskColor(s.risk) + ';font-family:var(--font-mono);">' + Math.round(s.risk) + '%</span></td>' +
+      '<td><span style="font-size:10px;color:' + evColor(ev.event) + ';">' + ev.event + '</span></td>' +
+      '<td><span style="font-family:var(--font-mono);font-size:11px;">' + Math.round(ev.conf) + '%</span></td>' +
+      '<td><span style="color:' + priorityColor(ev.priority) + ';font-weight:700;font-family:var(--font-ui);">' + ev.priority + '</span></td>' +
+      '<td><span style="color:var(--text3);font-family:var(--font-mono);">' + now + '</span></td>' +
+      '</tr>';
+  });
+  tbody.innerHTML = rows;
+  updateStatCounts();
+}
 
-        chartInstances.light = new Chart(document.getElementById('chart-light'), {
-          type: 'bar',
-          data: {
-            labels: hours,
-            datasets: [{
-              label: 'Light (lux)',
-              data: genArr(50, 900),
-              backgroundColor: genArr(50, 900).map(function (v) { return v > 500 ? 'rgba(239,68,68,0.7)' : v > 200 ? 'rgba(245,158,11,0.7)' : 'rgba(16,185,129,0.7)'; }),
-              borderWidth: 0
-            }]
-          },
-          options: base
-        });
+function updateStatCounts() {
+  var crit = 0, warn = 0, safe = 0;
+  Object.values(state).forEach(function(s) {
+    if (s.status === 'critical') crit++;
+    else if (s.status === 'warning') warn++;
+    else safe++;
+  });
+  var avgH = Math.round(Object.values(state).reduce(function(a, s) { return a + s.health; }, 0) / NODES.length);
 
-        var distLabels = DISTRICTS.slice(0, 8);
-        chartInstances.dist = new Chart(document.getElementById('chart-dist'), {
-          type: 'bar',
-          data: {
-            labels: distLabels,
-            datasets: [{ label: 'Incidents', data: distLabels.map(function () { return randInt(2, 15); }), backgroundColor: 'rgba(59,130,246,0.7)', borderRadius: 2 }]
-          },
-          options: Object.assign({}, base, { indexAxis: 'y' })
-        });
+  function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+  set('s-crit', crit); set('s-warn', warn); set('s-active', safe + warn + crit); set('s-health', avgH + '%');
+  set('sn-ok', safe); set('sn-warn', warn); set('sn-crit', crit);
+  set('alertBadge', crit + warn);
+}
 
-        chartInstances.alert = new Chart(document.getElementById('chart-alert'), {
-          type: 'line',
-          data: {
-            labels: hours,
-            datasets: [
-              { label: 'Critical', data: genArr(0, 3), borderColor: '#ef4444', fill: false, tension: 0.3, borderWidth: 1.5, pointRadius: 2 },
-              { label: 'Warning', data: genArr(0, 6), borderColor: '#f59e0b', fill: false, tension: 0.3, borderWidth: 1.5, pointRadius: 2 }
-            ]
-          },
-          options: base
-        });
-      }
+// ═══════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════
+var chartInstances = {};
+function initCharts() {
+  chartsInited = true;
+  var hours = [];
+  for (var i = 0; i < 24; i++) hours.push(('0'+i).slice(-2) + ':00');
 
-      // ═══════════════════════════════════════════════
-      // HISTORY
-      // ═══════════════════════════════════════════════
-      function renderHistory(data) {
-        var tbody = document.getElementById('history-tbody');
-        if (!tbody) return;
-        var rows = '';
-        data.forEach(function (h, i) {
-          var sevColor = h.severity === 'Critical' ? 'var(--red)' : h.severity === 'High' ? 'var(--yellow)' : h.severity === 'Medium' ? 'var(--blue)' : 'var(--green)';
-          var stCls = h.status === 'Open' ? 'b-crit' : h.status === 'Assigned' ? 'b-warn' : 'b-safe';
-          var tsStr = h.ts.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ' ' + h.ts.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
-          rows += '<tr style="cursor:pointer;" onclick="toggleExpand(' + i + ')">' +
-            '<td style="color:var(--text3);font-size:10px;">▶</td>' +
-            '<td style="font-family:var(--font-mono);font-size:11px;">' + tsStr + '</td>' +
-            '<td style="font-family:var(--font-mono);font-weight:700;">' + h.cable + '</td>' +
-            '<td>' + h.location + '</td>' +
-            '<td style="color:' + sevColor + ';">' + h.event + '</td>' +
-            '<td><span style="color:' + sevColor + ';font-family:var(--font-ui);font-weight:700;font-size:11px;">' + h.severity + '</span></td>' +
-            '<td><span class="badge ' + stCls + '">' + h.status + '</span></td>' +
-            '<td style="color:var(--text3);">' + h.tech + '</td>' +
-            '</tr>' +
-            '<tr id="exp-' + i + '" style="display:none;">' +
-            '<td colspan="8" style="background:var(--bg2);padding:12px 16px;">' +
-            '<div style="font-family:var(--font-ui);font-weight:700;color:var(--text);margin-bottom:6px;">📝 Technician Notes — ' + h.tech + '</div>' +
-            '<div style="color:var(--text2);font-size:11px;margin-bottom:6px;">' + h.notes + '</div>' +
-            '<div style="color:var(--text3);font-family:var(--font-mono);font-size:10px;">Pre-incident: Sensor reading spike detected 2–3 min prior. Automated P-alert dispatched to NOC. Field visit coordinated within 2hrs.</div>' +
-            '</td></tr>';
-        });
-        tbody.innerHTML = rows;
-      }
+  function genArr(min, max) {
+    return hours.map(function() { return rand(min, max); });
+  }
 
-      // Needs to be global for inline onclick
-      window.toggleExpand = function (i) {
-        var row = document.getElementById('exp-' + i);
-        if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
-      };
+  var base = {
+    responsive: true, maintainAspectRatio: true,
+    plugins: {legend: {labels: {color:'#94a3b8', font:{size:10}}}},
+    scales: {
+      x: {ticks:{color:'#64748b', font:{size:9}}, grid:{color:'rgba(30,58,95,0.4)'}},
+      y: {ticks:{color:'#64748b', font:{size:9}}, grid:{color:'rgba(30,58,95,0.4)'}}
+    }
+  };
 
-      document.getElementById('filterBtn').addEventListener('click', function () {
-        var dist = document.getElementById('f-dist').value;
-        var cable = document.getElementById('f-cable').value.trim().toUpperCase();
-        var from = document.getElementById('f-from').value;
-        var to = document.getElementById('f-to').value;
-        var filtered = historyData.filter(function (h) {
-          if (dist && h.location !== dist) return false;
-          if (cable && !h.cable.includes(cable)) return false;
-          if (from && h.ts < new Date(from)) return false;
-          if (to && h.ts > new Date(to + 'T23:59:59')) return false;
-          return true;
-        });
-        renderHistory(filtered);
-      });
+  chartInstances.vib = new Chart(document.getElementById('chart-vib'), {
+    type: 'line',
+    data: {
+      labels: hours,
+      datasets: [
+        {label:'TN-CHN-001', data:genArr(1,10), borderColor:'#ef4444', fill:false, tension:0.3, borderWidth:1.5, pointRadius:0},
+        {label:'TN-CBE-001', data:genArr(0.5,5), borderColor:'#f59e0b', fill:false, tension:0.3, borderWidth:1.5, pointRadius:0},
+        {label:'TN-MDU-001', data:genArr(0.3,8), borderColor:'#3b82f6', fill:false, tension:0.3, borderWidth:1.5, pointRadius:0}
+      ]
+    },
+    options: base
+  });
 
-      document.getElementById('resetFilterBtn').addEventListener('click', function () {
-        document.getElementById('f-dist').value = '';
-        document.getElementById('f-cable').value = '';
-        document.getElementById('f-from').value = '';
-        document.getElementById('f-to').value = '';
-        renderHistory(historyData);
-      });
+  chartInstances.gyro = new Chart(document.getElementById('chart-gyro'), {
+    type: 'line',
+    data: {
+      labels: hours,
+      datasets: [{label:'Avg Gyro °/s', data:genArr(0.1,7), borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,0.1)', fill:true, tension:0.4, borderWidth:1.5, pointRadius:0}]
+    },
+    options: base
+  });
 
-      // ═══════════════════════════════════════════════
-      // NODES
-      // ═══════════════════════════════════════════════
-      function renderNodes(filterText) {
-        var grid = document.getElementById('node-grid');
-        if (!grid) return;
-        var html = '';
-        var nodesToRender = NODES;
-        if (filterText) {
-          var f = filterText.toLowerCase();
-          nodesToRender = NODES.filter(function (n) {
-            return n.id.toLowerCase().includes(f) || n.district.toLowerCase().includes(f);
-          });
-        }
-        nodesToRender.forEach(function (n) {
-          var nh = nodeHealth[n.id];
-          var online = nh.online;
-          var batCol = nh.battery < 25 ? 'var(--red)' : nh.battery < 50 ? 'var(--yellow)' : 'var(--green)';
-          var sigBars = nh.signal > -65 ? '▮▮▮▮' : nh.signal > -75 ? '▮▮▮' : nh.signal > -85 ? '▮▮' : '▮';
-          var borderCol = online ? 'var(--border)' : 'rgba(239,68,68,0.35)';
-          html += '<div class="node-card" style="border-color:' + borderCol + ';">' +
-            '<div class="node-hdr">' +
-            '<div class="node-id">' + n.id + '</div>' +
-            '<div class="n-online' + (online ? '' : ' n-offline') + '">' +
-            '<span class="live-dot" style="background:' + (online ? 'var(--green)' : 'var(--red)') + ';animation:' + (online ? 'blink 1.2s infinite' : 'none') + ';"></span>' +
-            (online ? 'ONLINE' : 'OFFLINE') + '</div></div>' +
-            '<div class="nm"><span class="nm-lbl">District</span><span class="nm-val">' + n.district + '</span></div>' +
-            '<div class="nm"><span class="nm-lbl">Battery</span><span class="nm-val" style="color:' + batCol + '">' + Math.round(nh.battery) + '%</span></div>' +
-            '<div class="pbar"><div class="pfill" style="width:' + Math.round(nh.battery) + '%;background:' + batCol + ';"></div></div>' +
-            '<div class="nm" style="margin-top:4px;"><span class="nm-lbl">Signal</span><span class="nm-val">' + Math.round(nh.signal) + 'dBm ' + sigBars + '</span></div>' +
-            '<div class="nm"><span class="nm-lbl">Last Sync</span><span class="nm-val">' + nh.lastSync.toLocaleTimeString('en-IN', { hour12: false }) + '</span></div>' +
-            '<div class="nm"><span class="nm-lbl">Firmware</span><span class="nm-val">' + nh.firmware + '</span></div>' +
-            '</div>';
-        });
-        grid.innerHTML = html;
-        // Update stats
-        var offline = NODES.filter(function (n) { return !nodeHealth[n.id].online; }).length;
-        var lowBat = NODES.filter(function (n) { return nodeHealth[n.id].battery < 30; }).length;
-        var avgSig = Math.round(NODES.reduce(function (a, n) { return a + nodeHealth[n.id].signal; }, 0) / NODES.length);
-        function set(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
-        set('nd-on', NODES.length - offline);
-        set('nd-off', offline);
-        set('nd-bat', lowBat);
-        set('nd-sig', avgSig + 'dBm');
-      }
+  chartInstances.light = new Chart(document.getElementById('chart-light'), {
+    type: 'bar',
+    data: {
+      labels: hours,
+      datasets: [{
+        label: 'Light (lux)',
+        data: genArr(50, 900),
+        backgroundColor: genArr(50, 900).map(function(v) { return v > 500 ? 'rgba(239,68,68,0.7)' : v > 200 ? 'rgba(245,158,11,0.7)' : 'rgba(16,185,129,0.7)'; }),
+        borderWidth: 0
+      }]
+    },
+    options: base
+  });
 
-      var nodeSearchEl = document.getElementById('f-node-search');
-      if (nodeSearchEl) {
-        nodeSearchEl.addEventListener('input', function (e) {
-          renderNodes(e.target.value);
-        });
-      }
+  var distLabels = DISTRICTS.slice(0, 8);
+  chartInstances.dist = new Chart(document.getElementById('chart-dist'), {
+    type: 'bar',
+    data: {
+      labels: distLabels,
+      datasets: [{label:'Incidents', data:distLabels.map(function() { return randInt(2,15); }), backgroundColor:'rgba(59,130,246,0.7)', borderRadius:2}]
+    },
+    options: Object.assign({}, base, {indexAxis:'y'})
+  });
 
-      // ═══════════════════════════════════════════════
-      // RISK ENGINE
-      // ═══════════════════════════════════════════════
-      function renderRisk(filterText) {
-        var grid = document.getElementById('risk-grid');
-        if (!grid) return;
-        var html = '';
-        var r = 30;
-        var circ = 2 * Math.PI * r;
+  chartInstances.alert = new Chart(document.getElementById('chart-alert'), {
+    type: 'line',
+    data: {
+      labels: hours,
+      datasets: [
+        {label:'Critical', data:genArr(0,3), borderColor:'#ef4444', fill:false, tension:0.3, borderWidth:1.5, pointRadius:2},
+        {label:'Warning', data:genArr(0,6), borderColor:'#f59e0b', fill:false, tension:0.3, borderWidth:1.5, pointRadius:2}
+      ]
+    },
+    options: base
+  });
+}
 
-        var risksToRender = Object.values(state);
-        if (filterText) {
-          var f = filterText.toLowerCase();
-          risksToRender = risksToRender.filter(function (s) {
-            return s.id.toLowerCase().includes(f) || s.district.toLowerCase().includes(f);
-          });
-        }
+// ═══════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════
+function renderHistory(data) {
+  var tbody = document.getElementById('history-tbody');
+  if (!tbody) return;
+  var rows = '';
+  data.forEach(function(h, i) {
+    var sevColor = h.severity === 'Critical' ? 'var(--red)' : h.severity === 'High' ? 'var(--yellow)' : h.severity === 'Medium' ? 'var(--blue)' : 'var(--green)';
+    var stCls = h.status === 'Open' ? 'b-crit' : h.status === 'Assigned' ? 'b-warn' : 'b-safe';
+    var tsStr = h.ts.toLocaleDateString('en-IN', {day:'2-digit', month:'short'}) + ' ' + h.ts.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:false});
+    rows += '<tr style="cursor:pointer;" onclick="toggleExpand(' + i + ')">' +
+      '<td style="color:var(--text3);font-size:10px;">▶</td>' +
+      '<td style="font-family:var(--font-mono);font-size:11px;">' + tsStr + '</td>' +
+      '<td style="font-family:var(--font-mono);font-weight:700;">' + h.cable + '</td>' +
+      '<td>' + h.location + '</td>' +
+      '<td style="color:' + sevColor + ';">' + h.event + '</td>' +
+      '<td><span style="color:' + sevColor + ';font-family:var(--font-ui);font-weight:700;font-size:11px;">' + h.severity + '</span></td>' +
+      '<td><span class="badge ' + stCls + '">' + h.status + '</span></td>' +
+      '<td style="color:var(--text3);">' + h.tech + '</td>' +
+      '</tr>' +
+      '<tr id="exp-' + i + '" style="display:none;">' +
+      '<td colspan="8" style="background:var(--bg2);padding:12px 16px;">' +
+      '<div style="font-family:var(--font-ui);font-weight:700;color:var(--text);margin-bottom:6px;">📝 Technician Notes — ' + h.tech + '</div>' +
+      '<div style="color:var(--text2);font-size:11px;margin-bottom:6px;">' + h.notes + '</div>' +
+      '<div style="color:var(--text3);font-family:var(--font-mono);font-size:10px;">Pre-incident: Sensor reading spike detected 2–3 min prior. Automated P-alert dispatched to NOC. Field visit coordinated within 2hrs.</div>' +
+      '</td></tr>';
+  });
+  tbody.innerHTML = rows;
+}
 
-        risksToRender.forEach(function (s) {
-          var hCol = s.health >= 80 ? '#10b981' : s.health >= 50 ? '#f59e0b' : '#ef4444';
-          var rCol = s.risk > 70 ? '#ef4444' : s.risk > 40 ? '#f59e0b' : '#10b981';
-          var hDash = (s.health / 100) * circ;
-          var rDash = (s.risk / 100) * circ;
-          var evLabel = s.event === 'Drilling' ? 'DRILL' : s.event === 'Heavy Vehicle' ? 'VEHICLE' : s.event === 'Cable Exposure' ? 'EXPOSURE' : 'ENV';
-          html += '<div class="risk-card">' +
-            '<div style="font-family:var(--font-mono);font-weight:700;font-size:11px;color:var(--text);margin-bottom:2px;">' + s.id + '</div>' +
-            '<div style="font-size:10px;color:var(--text3);margin-bottom:8px;">' + s.district + '</div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center;">' +
-            // HEALTH RING
-            '<div>' +
-            '<div style="font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;">HEALTH</div>' +
-            '<div style="position:relative;width:70px;height:70px;margin:0 auto;">' +
-            '<svg width="70" height="70" style="transform:rotate(-90deg);">' +
-            '<circle cx="35" cy="35" r="' + r + '" fill="none" stroke="var(--bg3)" stroke-width="6"/>' +
-            '<circle cx="35" cy="35" r="' + r + '" fill="none" stroke="' + hCol + '" stroke-width="6" stroke-dasharray="' + hDash.toFixed(1) + ' ' + circ.toFixed(1) + '" stroke-linecap="round"/>' +
-            '</svg>' +
-            '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--font-mono);font-size:15px;font-weight:700;color:' + hCol + ';">' + Math.round(s.health) + '</div>' +
-            '</div></div>' +
-            // RISK RING
-            '<div>' +
-            '<div style="font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;">RISK %</div>' +
-            '<div style="position:relative;width:70px;height:70px;margin:0 auto;">' +
-            '<svg width="70" height="70" style="transform:rotate(-90deg);">' +
-            '<circle cx="35" cy="35" r="' + r + '" fill="none" stroke="var(--bg3)" stroke-width="6"/>' +
-            '<circle cx="35" cy="35" r="' + r + '" fill="none" stroke="' + rCol + '" stroke-width="6" stroke-dasharray="' + rDash.toFixed(1) + ' ' + circ.toFixed(1) + '" stroke-linecap="round"/>' +
-            '</svg>' +
-            '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--font-mono);font-size:15px;font-weight:700;color:' + rCol + ';">' + Math.round(s.risk) + '</div>' +
-            '</div></div>' +
-            '</div>' +
-            '<div style="font-size:10px;color:var(--text3);text-align:center;margin-top:6px;">' + evLabel + ' · ' + s.priority + '</div>' +
-            '</div>';
-        });
-        grid.innerHTML = html;
-      }
+// Needs to be global for inline onclick
+window.toggleExpand = function(i) {
+  var row = document.getElementById('exp-' + i);
+  if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+};
 
-      var riskSearchEl = document.getElementById('f-risk-search');
-      if (riskSearchEl) {
-        riskSearchEl.addEventListener('input', function (e) {
-          renderRisk(e.target.value);
-        });
-      }
+document.getElementById('filterBtn').addEventListener('click', function() {
+  var dist = document.getElementById('f-dist').value;
+  var cable = document.getElementById('f-cable').value.trim().toUpperCase();
+  var from = document.getElementById('f-from').value;
+  var to = document.getElementById('f-to').value;
+  var filtered = historyData.filter(function(h) {
+    if (dist && h.location !== dist) return false;
+    if (cable && !h.cable.includes(cable)) return false;
+    if (from && h.ts < new Date(from)) return false;
+    if (to && h.ts > new Date(to + 'T23:59:59')) return false;
+    return true;
+  });
+  renderHistory(filtered);
+});
 
-      // ═══════════════════════════════════════════════
-      // REPORTS
-      // ═══════════════════════════════════════════════
-      function renderReports() {
-        var el = document.getElementById('rpt-summary');
-        if (!el) return;
-        var crit = Object.values(state).filter(function (s) { return s.status === 'critical'; }).length;
-        var warn = Object.values(state).filter(function (s) { return s.status === 'warning'; }).length;
-        var offline = NODES.filter(function (n) { return !nodeHealth[n.id].online; }).length;
-        var avgH = Math.round(Object.values(state).reduce(function (a, s) { return a + s.health; }, 0) / NODES.length);
-        var last24 = historyData.filter(function (h) { return (Date.now() - h.ts) < 86400000; }).length;
-        el.innerHTML =
-          'TANFINET System Status Report — ' + new Date().toLocaleString('en-IN') + '<br>' +
-          '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>' +
-          'Total Monitored Nodes   : ' + NODES.length + '<br>' +
-          'Active / Online         : ' + (NODES.length - offline) + '<br>' +
-          'Offline Nodes           : ' + offline + '<br>' +
-          'Critical Alerts Active  : ' + crit + '<br>' +
-          'Warning Alerts Active   : ' + warn + '<br>' +
-          'Events in Last 24h      : ' + last24 + '<br>' +
-          'Average Fiber Health    : ' + avgH + '%<br>' +
-          '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>' +
-          '<span style="color:var(--green);">All sensor streams active. WebSocket ready for hardware integration.</span>';
-      }
+document.getElementById('resetFilterBtn').addEventListener('click', function() {
+  document.getElementById('f-dist').value = '';
+  document.getElementById('f-cable').value = '';
+  document.getElementById('f-from').value = '';
+  document.getElementById('f-to').value = '';
+  renderHistory(historyData);
+});
 
-      function dlFile(name, content, type) {
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([content], { type: type }));
-        a.download = name;
-        a.click();
-      }
+// ═══════════════════════════════════════════════
+// NODES
+// ═══════════════════════════════════════════════
+function renderNodes() {
+  var grid = document.getElementById('node-grid');
+  if (!grid) return;
+  var html = '';
+  NODES.forEach(function(n) {
+    var nh = nodeHealth[n.id];
+    var online = nh.online;
+    var batCol = nh.battery < 25 ? 'var(--red)' : nh.battery < 50 ? 'var(--yellow)' : 'var(--green)';
+    var sigBars = nh.signal > -65 ? '▮▮▮▮' : nh.signal > -75 ? '▮▮▮' : nh.signal > -85 ? '▮▮' : '▮';
+    var borderCol = online ? 'var(--border)' : 'rgba(239,68,68,0.35)';
+    html += '<div class="node-card" style="border-color:' + borderCol + ';">' +
+      '<div class="node-hdr">' +
+      '<div class="node-id">' + n.id + '</div>' +
+      '<div class="n-online' + (online ? '' : ' n-offline') + '">' +
+      '<span class="live-dot" style="background:' + (online?'var(--green)':'var(--red)') + ';animation:' + (online?'blink 1.2s infinite':'none') + ';"></span>' +
+      (online ? 'ONLINE' : 'OFFLINE') + '</div></div>' +
+      '<div class="nm"><span class="nm-lbl">District</span><span class="nm-val">' + n.district + '</span></div>' +
+      '<div class="nm"><span class="nm-lbl">Battery</span><span class="nm-val" style="color:' + batCol + '">' + Math.round(nh.battery) + '%</span></div>' +
+      '<div class="pbar"><div class="pfill" style="width:' + Math.round(nh.battery) + '%;background:' + batCol + ';"></div></div>' +
+      '<div class="nm" style="margin-top:4px;"><span class="nm-lbl">Signal</span><span class="nm-val">' + Math.round(nh.signal) + 'dBm ' + sigBars + '</span></div>' +
+      '<div class="nm"><span class="nm-lbl">Last Sync</span><span class="nm-val">' + nh.lastSync.toLocaleTimeString('en-IN',{hour12:false}) + '</span></div>' +
+      '<div class="nm"><span class="nm-lbl">Firmware</span><span class="nm-val">' + nh.firmware + '</span></div>' +
+      '</div>';
+  });
+  grid.innerHTML = html;
+  // Update stats
+  var offline = NODES.filter(function(n) { return !nodeHealth[n.id].online; }).length;
+  var lowBat = NODES.filter(function(n) { return nodeHealth[n.id].battery < 30; }).length;
+  var avgSig = Math.round(NODES.reduce(function(a,n) { return a + nodeHealth[n.id].signal; }, 0) / NODES.length);
+  function set(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+  set('nd-on', NODES.length - offline);
+  set('nd-off', offline);
+  set('nd-bat', lowBat);
+  set('nd-sig', avgSig + 'dBm');
+}
 
-      document.getElementById('rpt-csv').addEventListener('click', function () {
-        var header = 'Cable ID,District,Vibration,Gyro,Light,Status,Health,Risk,Event,Priority\n';
-        var rows = Object.values(state).map(function (s) {
-          return s.id + ',' + s.district + ',' + s.vib.toFixed(2) + ',' + s.gyro.toFixed(2) + ',' + Math.round(s.light) + ',' + s.status + ',' + Math.round(s.health) + ',' + Math.round(s.risk) + ',' + s.event + ',' + s.priority;
-        }).join('\n');
-        dlFile('tanfinet_sensor_data.csv', header + rows, 'text/csv');
-      });
+// ═══════════════════════════════════════════════
+// RISK ENGINE
+// ═══════════════════════════════════════════════
+function renderRisk() {
+  var grid = document.getElementById('risk-grid');
+  if (!grid) return;
+  var html = '';
+  var r = 30;
+  var circ = 2 * Math.PI * r;
+  Object.values(state).forEach(function(s) {
+    var hCol = s.health >= 80 ? '#10b981' : s.health >= 50 ? '#f59e0b' : '#ef4444';
+    var rCol = s.risk > 70 ? '#ef4444' : s.risk > 40 ? '#f59e0b' : '#10b981';
+    var hDash = (s.health / 100) * circ;
+    var rDash = (s.risk / 100) * circ;
+    var evLabel = s.event === 'Drilling' ? 'DRILL' : s.event === 'Heavy Vehicle' ? 'VEHICLE' : s.event === 'Cable Exposure' ? 'EXPOSURE' : 'ENV';
+    html += '<div class="risk-card">' +
+      '<div style="font-family:var(--font-mono);font-weight:700;font-size:11px;color:var(--text);margin-bottom:2px;">' + s.id + '</div>' +
+      '<div style="font-size:10px;color:var(--text3);margin-bottom:8px;">' + s.district + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center;">' +
+      // HEALTH RING
+      '<div>' +
+      '<div style="font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;">HEALTH</div>' +
+      '<div style="position:relative;width:70px;height:70px;margin:0 auto;">' +
+      '<svg width="70" height="70" style="transform:rotate(-90deg);">' +
+      '<circle cx="35" cy="35" r="' + r + '" fill="none" stroke="var(--bg3)" stroke-width="6"/>' +
+      '<circle cx="35" cy="35" r="' + r + '" fill="none" stroke="' + hCol + '" stroke-width="6" stroke-dasharray="' + hDash.toFixed(1) + ' ' + circ.toFixed(1) + '" stroke-linecap="round"/>' +
+      '</svg>' +
+      '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--font-mono);font-size:15px;font-weight:700;color:' + hCol + ';">' + Math.round(s.health) + '</div>' +
+      '</div></div>' +
+      // RISK RING
+      '<div>' +
+      '<div style="font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;">RISK %</div>' +
+      '<div style="position:relative;width:70px;height:70px;margin:0 auto;">' +
+      '<svg width="70" height="70" style="transform:rotate(-90deg);">' +
+      '<circle cx="35" cy="35" r="' + r + '" fill="none" stroke="var(--bg3)" stroke-width="6"/>' +
+      '<circle cx="35" cy="35" r="' + r + '" fill="none" stroke="' + rCol + '" stroke-width="6" stroke-dasharray="' + rDash.toFixed(1) + ' ' + circ.toFixed(1) + '" stroke-linecap="round"/>' +
+      '</svg>' +
+      '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--font-mono);font-size:15px;font-weight:700;color:' + rCol + ';">' + Math.round(s.risk) + '</div>' +
+      '</div></div>' +
+      '</div>' +
+      '<div style="font-size:10px;color:var(--text3);text-align:center;margin-top:6px;">' + evLabel + ' · ' + s.priority + '</div>' +
+      '</div>';
+  });
+  grid.innerHTML = html;
+}
 
-      document.getElementById('rpt-log').addEventListener('click', function () {
-        var header = 'Timestamp,Cable ID,Location,Event,Severity,Status,Technician\n';
-        var rows = historyData.map(function (h) {
-          return h.ts.toISOString() + ',' + h.cable + ',' + h.location + ',' + h.event + ',' + h.severity + ',' + h.status + ',' + h.tech;
-        }).join('\n');
-        dlFile('tanfinet_incident_logs.csv', header + rows, 'text/csv');
-      });
+// ═══════════════════════════════════════════════
+// REPORTS
+// ═══════════════════════════════════════════════
+function renderReports() {
+  var el = document.getElementById('rpt-summary');
+  if (!el) return;
+  var crit = Object.values(state).filter(function(s) { return s.status === 'critical'; }).length;
+  var warn = Object.values(state).filter(function(s) { return s.status === 'warning'; }).length;
+  var offline = NODES.filter(function(n) { return !nodeHealth[n.id].online; }).length;
+  var avgH = Math.round(Object.values(state).reduce(function(a,s) { return a+s.health; }, 0) / NODES.length);
+  var last24 = historyData.filter(function(h) { return (Date.now() - h.ts) < 86400000; }).length;
+  el.innerHTML =
+    'TANFINET System Status Report — ' + new Date().toLocaleString('en-IN') + '<br>' +
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>' +
+    'Total Monitored Nodes   : ' + NODES.length + '<br>' +
+    'Active / Online         : ' + (NODES.length - offline) + '<br>' +
+    'Offline Nodes           : ' + offline + '<br>' +
+    'Critical Alerts Active  : ' + crit + '<br>' +
+    'Warning Alerts Active   : ' + warn + '<br>' +
+    'Events in Last 24h      : ' + last24 + '<br>' +
+    'Average Fiber Health    : ' + avgH + '%<br>' +
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br>' +
+    '<span style="color:var(--green);">All sensor streams active. WebSocket ready for hardware integration.</span>';
+}
 
-      document.getElementById('rpt-pdf').addEventListener('click', function () {
-        alert('📄 PDF report generation initiated.\nIn production deployment, this compiles all analytics, node health, incident data and risk scores into a formatted PDF report.');
-      });
+function dlFile(name, content, type) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type: type}));
+  a.download = name;
+  a.click();
+}
 
-      document.getElementById('rpt-map').addEventListener('click', function () {
-        window.print();
-      });
+document.getElementById('rpt-csv').addEventListener('click', function() {
+  var header = 'Cable ID,District,Vibration,Gyro,Light,Status,Health,Risk,Event,Priority\n';
+  var rows = Object.values(state).map(function(s) {
+    return s.id + ',' + s.district + ',' + s.vib.toFixed(2) + ',' + s.gyro.toFixed(2) + ',' + Math.round(s.light) + ',' + s.status + ',' + Math.round(s.health) + ',' + Math.round(s.risk) + ',' + s.event + ',' + s.priority;
+  }).join('\n');
+  dlFile('tanfinet_sensor_data.csv', header + rows, 'text/csv');
+});
 
-      // ═══════════════════════════════════════════════
-      // TEST ALERT
-      // ═══════════════════════════════════════════════
-      document.getElementById('alertBtn').addEventListener('click', function () {
-        var n = NODES[randInt(0, NODES.length)];
-        var s = state[n.id];
-        s.vib = rand(8, 12);
-        s.gyro = rand(4, 8);
-        s.status = 'critical';
-        s.event = 'Drilling';
-        s.risk = rand(88, 99);
-        s.health = rand(15, 35);
-        s.priority = 'P1';
-        s.conf = rand(90, 98);
-        updateMapMarkers();
-        updateStatCounts();
-        alert('🚨 ALERT TRIGGERED\nNode: ' + n.id + '\nDistrict: ' + n.district + '\nEvent: Unauthorized Drilling Detected\nPriority: P1 — Immediate Response Required\nRisk Score: ' + Math.round(s.risk) + '%');
-      });
+document.getElementById('rpt-log').addEventListener('click', function() {
+  var header = 'Timestamp,Cable ID,Location,Event,Severity,Status,Technician\n';
+  var rows = historyData.map(function(h) {
+    return h.ts.toISOString() + ',' + h.cable + ',' + h.location + ',' + h.event + ',' + h.severity + ',' + h.status + ',' + h.tech;
+  }).join('\n');
+  dlFile('tanfinet_incident_logs.csv', header + rows, 'text/csv');
+});
 
-      // ═══════════════════════════════════════════════
-      // LIVE SIMULATION — every 2s
-      // ═══════════════════════════════════════════════
-      function simulateLive() {
-        Object.keys(state).forEach(function (id) {
-          var s = state[id];
-          // Small random fluctuation
-          s.vib = Math.max(0.1, s.vib + (Math.random() - 0.5) * 0.25);
-          s.gyro = Math.max(0.01, s.gyro + (Math.random() - 0.5) * 0.15);
-          s.light = Math.max(10, s.light + (Math.random() - 0.5) * 18);
-          // Re-classify
-          if (s.vib > 7 && s.gyro > 3) { s.status = 'critical'; s.event = 'Drilling'; s.priority = 'P1'; }
-          else if (s.vib > 5) { s.status = 'critical'; s.event = 'Heavy Vehicle'; s.priority = 'P1'; }
-          else if (s.light > 500 && s.vib < 2) { s.status = 'warning'; s.event = 'Cable Exposure'; s.priority = 'P2'; }
-          else if (s.vib > 2.5) { s.status = 'warning'; s.event = 'Heavy Vehicle'; s.priority = 'P2'; }
-          else { s.status = 'safe'; s.event = 'Environmental'; s.priority = 'P3'; }
-          s.risk = Math.min(99, Math.max(1, (s.vib / 10) * 60 + (s.gyro / 10) * 30 + (s.light / 1000) * 10));
-          s.health = Math.max(10, 100 - s.risk * 0.7 - rand(0, 3));
-          // Battery drain
-          var nh = nodeHealth[id];
-          if (nh) { nh.battery = Math.max(3, nh.battery - 0.002); nh.lastSync = new Date(); }
-        });
+document.getElementById('rpt-pdf').addEventListener('click', function() {
+  alert('📄 PDF report generation initiated.\nIn production deployment, this compiles all analytics, node health, incident data and risk scores into a formatted PDF report.');
+});
 
-        updateStatCounts();
-        updateMapMarkers();
+document.getElementById('rpt-map').addEventListener('click', function() {
+  window.print();
+});
 
-        // Update whichever view is active
-        var active = document.querySelector('.view.active');
-        if (active) {
-          if (active.id === 'view-sensors') renderSensors();
-          if (active.id === 'view-nodes') {
-            var nSearch = document.getElementById('f-node-search');
-            renderNodes(nSearch ? nSearch.value : '');
-          }
-          if (active.id === 'view-risk') {
-            var rSearch = document.getElementById('f-risk-search');
-            renderRisk(rSearch ? rSearch.value : '');
-          }
-          if (active.id === 'view-reports') renderReports();
-        }
-      }
+// ═══════════════════════════════════════════════
+// TEST ALERT
+// ═══════════════════════════════════════════════
+document.getElementById('alertBtn').addEventListener('click', function() {
+  var n = NODES[randInt(0, NODES.length)];
+  var s = state[n.id];
+  s.vib = rand(8, 12);
+  s.gyro = rand(4, 8);
+  s.status = 'critical';
+  s.event = 'Drilling';
+  s.risk = rand(88, 99);
+  s.health = rand(15, 35);
+  s.priority = 'P1';
+  s.conf = rand(90, 98);
+  updateMapMarkers();
+  updateStatCounts();
+  alert('🚨 ALERT TRIGGERED\nNode: ' + n.id + '\nDistrict: ' + n.district + '\nEvent: Unauthorized Drilling Detected\nPriority: P1 — Immediate Response Required\nRisk Score: ' + Math.round(s.risk) + '%');
+});
 
-      setInterval(simulateLive, 2000);
+// ═══════════════════════════════════════════════
+// LIVE SIMULATION — every 2s
+// ═══════════════════════════════════════════════
+function simulateLive() {
+  Object.keys(state).forEach(function(id) {
+    var s = state[id];
+    // Small random fluctuation
+    s.vib = Math.max(0.1, s.vib + (Math.random() - 0.5) * 0.25);
+    s.gyro = Math.max(0.01, s.gyro + (Math.random() - 0.5) * 0.15);
+    s.light = Math.max(10, s.light + (Math.random() - 0.5) * 18);
+    // Re-classify
+    if (s.vib > 7 && s.gyro > 3) { s.status = 'critical'; s.event = 'Drilling'; s.priority = 'P1'; }
+    else if (s.vib > 5) { s.status = 'critical'; s.event = 'Heavy Vehicle'; s.priority = 'P1'; }
+    else if (s.light > 500 && s.vib < 2) { s.status = 'warning'; s.event = 'Cable Exposure'; s.priority = 'P2'; }
+    else if (s.vib > 2.5) { s.status = 'warning'; s.event = 'Heavy Vehicle'; s.priority = 'P2'; }
+    else { s.status = 'safe'; s.event = 'Environmental'; s.priority = 'P3'; }
+    s.risk = Math.min(99, Math.max(1, (s.vib / 10) * 60 + (s.gyro / 10) * 30 + (s.light / 1000) * 10));
+    s.health = Math.max(10, 100 - s.risk * 0.7 - rand(0, 3));
+    // Battery drain
+    var nh = nodeHealth[id];
+    if (nh) { nh.battery = Math.max(3, nh.battery - 0.002); nh.lastSync = new Date(); }
+  });
 
-      // ═══════════════════════════════════════════════
-      // INIT — load map on first render
-      // ═══════════════════════════════════════════════
-      window.addEventListener('load', function () {
-        initMap();
-        updateStatCounts();
-      });
+  updateStatCounts();
+  updateMapMarkers();
 
-    })(); // end IIFE
-  </script>
+  // Update whichever view is active
+  var active = document.querySelector('.view.active');
+  if (active) {
+    if (active.id === 'view-sensors') renderSensors();
+    if (active.id === 'view-nodes') renderNodes();
+    if (active.id === 'view-risk') renderRisk();
+    if (active.id === 'view-reports') renderReports();
+  }
+}
+
+setInterval(simulateLive, 2000);
+
+// ═══════════════════════════════════════════════
+// INIT — load map on first render
+// ═══════════════════════════════════════════════
+window.addEventListener('load', function() {
+  initMap();
+  updateStatCounts();
+});
+
+})(); // end IIFE
+</script>
 </body>
-
 </html>
