@@ -1,5 +1,3 @@
-<img width="1118" height="893" alt="image" src="https://github.com/user-attachments/assets/9120741f-95c4-4c1d-9f61-9e3c71d99783" /># TANFINET – Optical Fiber Predictive Surveillance & Intrusion Detection System
-
 ## 📡 Project Overview
 
 TANFINET Optical Fiber Monitoring System is an advanced predictive surveillance and intrusion detection dashboard designed to monitor, analyze, and predict optical fiber damage across Tamil Nadu.
